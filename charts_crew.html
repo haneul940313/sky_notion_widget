@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar</title>
+
+  <style>
+    :root{
+      /* 요청 색상 */
+      --brand: #56c1ff;
+      --brand-weak: rgba(86,193,255,0.22);
+      --text: #555;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Notion 임베드 폭에 맞춰 유동 */
+    #calendari {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      box-shadow: none;
+      background-color: #fff;
+    }
+
+    td, th {
+      text-align: center;
+      background-color: #fff;
+    }
+
+    /* 상단 타이틀(월/년) */
+    th.title {
+      position: relative;
+      padding: 12px 44px;
+      font-size: 20px;
+      font-weight: bold;
+
+      background-color: var(--brand);
+      color: #fff;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      border-right: 1px solid rgba(0,0,0,0.1);
+      text-shadow: 0px -1px 0px rgba(0,0,0,0.12);
+    }
+
+    th.title .any {
+      display: block;
+      font-size: 12px;
+      font-weight: normal;
+      color: rgba(255,255,255,0.85);
+      text-shadow: none;
+      margin-top: 2px;
+    }
+
+    /* 요일 헤더 */
+    tr.weekdays th {
+      padding: 7px 0;
+      font-weight: normal;
+
+      background-color: var(--brand);
+      color: #fff;
+      border-right: 1px solid rgba(255,255,255,0.18);
+      border-top: 1px solid rgba(255,255,255,0.18);
+    }
+    tr.weekdays th:last-child {
+      border-right: none;
+    }
+
+    td {
+      padding: 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    td > span {
+      color: var(--text);
+      padding: 10px;
+      display: block;
+      border: 2px solid transparent;
+      transition: background 0.15s ease, color 0.15s ease;
+      user-select: none;
+    }
+
+    td:nth-child(even) > span {
+      background-color: rgba(0,0,0,0.02);
+    }
+
+    /* 주말 숫자 색(블랙) */
+    td:first-child > span,
+    td:last-child > span {
+      color: #000;
+    }
+
+    /* 오늘 */
+    td.avui > span {
+      font-weight: bold;
+      background-color: var(--brand);
+      color: #fff;
+      border: 2px solid var(--brand-weak);
+    }
+
+    /* 이번 달 아닌 날짜(흐리게) */
+    td.fora > span {
+      opacity: 0.2;
+    }
+
+    td > span:hover {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    /* 이전/다음 버튼 */
+    .boto-next, .boto-prev {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: none;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 0;
+      line-height: 1;
+      height: 30px;
+      width: 30px;
+      border-radius: 999px;
+      position: absolute;
+      top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .boto-prev { left: 10px; }
+    .boto-next { right: 10px; }
+
+    .boto-next:hover,
+    .boto-prev:hover {
+      background: rgba(255,255,255,0.28);
+    }
+    .boto-next:focus,
+    .boto-prev:focus {
+      outline: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="calendari"></div>
+
+  <script>
+    var mesos = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+
+    // 일요일 시작
+    var dies_abr = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+    function sameDate(a, b) {
+      return a.getFullYear() === b.getFullYear() &&
+             a.getMonth() === b.getMonth() &&
+             a.getDate() === b.getDate();
+    }
+
+    function renderCalendar(container, viewDate) {
+      container.innerHTML = '';
+
+      var today = new Date();
+      var year = viewDate.getFullYear();
+      var month = viewDate.getMonth();
+
+      var table = document.createElement('table');
+
+      // 타이틀 행
+      var trTitle = document.createElement('tr');
+      var thTitle = document.createElement('th');
+      thTitle.className = 'title';
+      thTitle.colSpan = 7;
+
+      var btnPrev = document.createElement('button');
+      btnPrev.className = 'boto-prev';
+      btnPrev.innerHTML = '&#9666;';
+
+      var btnNext = document.createElement('button');
+      btnNext.className = 'boto-next';
+      btnNext.innerHTML = '&#9656;';
+
+      var titleSpan = document.createElement('span');
+      titleSpan.innerHTML = mesos[month] + '<span class="any">' + year + '</span>';
+
+      btnPrev.onclick = function() {
+        var d = new Date(viewDate);
+        d.setMonth(d.getMonth() - 1);
+        renderCalendar(container, d);
+      };
+
+      btnNext.onclick = function() {
+        var d = new Date(viewDate);
+        d.setMonth(d.getMonth() + 1);
+        renderCalendar(container, d);
+      };
+
+      thTitle.appendChild(btnPrev);
+      thTitle.appendChild(titleSpan);
+      thTitle.appendChild(btnNext);
+      trTitle.appendChild(thTitle);
+      table.appendChild(trTitle);
+
+      // 요일 행
+      var trWeek = document.createElement('tr');
+      trWeek.className = 'weekdays';
+      for (var i = 0; i < 7; i++) {
+        var th = document.createElement('th');
+        th.textContent = dies_abr[i];
+        trWeek.appendChild(th);
+      }
+      table.appendChild(trWeek);
+
+      // 달력 첫 칸(일요일 시작 기준)
+      var firstOfMonth = new Date(year, month, 1);
+      var offset = firstOfMonth.getDay(); // 0=Sun
+      var actual = new Date(year, month, 1 - offset);
+
+      // 필요한 주까지만 렌더
+      while (true) {
+        var tr = document.createElement('tr');
+
+        for (var d = 0; d < 7; d++) {
+          var td = document.createElement('td');
+          var span = document.createElement('span');
+          span.textContent = actual.getDate();
+
+          if (actual.getMonth() !== month) td.className = 'fora';
+          if (sameDate(actual, today)) td.className = 'avui';
+
+          td.appendChild(span);
+          tr.appendChild(td);
+
+          actual.setDate(actual.getDate() + 1);
+        }
+
+        table.appendChild(tr);
+
+        if (actual.getDay() === 0 && actual.getMonth() !== month) break;
+      }
+
+      container.appendChild(table);
+    }
+
+    renderCalendar(document.getElementById('calendari'), new Date());
+  </script>
+</body>
+</html>
