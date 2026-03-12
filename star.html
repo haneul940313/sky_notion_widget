@@ -391,7 +391,7 @@
   <script>
     const STORAGE_KEY = 'actor-works-widget-data';
     const ADMIN_SESSION_KEY = 'actor-works-admin-session';
-    const ADMIN_PIN = '1234';
+    const ADMIN_PIN = '0716';
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
         <rect width="400" height="600" fill="#ececf1"/>
@@ -520,7 +520,7 @@
           openEdit(item.id);
         });
         document.getElementById('deleteWorkBtn').addEventListener('click', () => {
-          if (confirm('이 작품을 삭제할까요?')) {
+          if (confirm('이 작품을 삭제하겠습니까?')) {
             items = items.filter(v => v.id !== item.id);
             saveItems();
             closeDetail();
@@ -590,7 +590,7 @@
     async function saveWork() {
       const title = workTitle.value.trim();
       if (!title) {
-        alert('작품명을 입력해줘.');
+        alert('작품명을 입력해주세요.');
         workTitle.focus();
         return;
       }
@@ -626,7 +626,7 @@
       try {
         saveItems();
       } catch (e) {
-        alert('저장에 실패했습니다. 이미지 파일이 너무 큰 경우일 수 있어. 더 작은 이미지로 다시 시도해줘.');
+        alert('저장에 실패했습니다. 파일 용량을 줄여주세요.');
         return;
       }
 
