@@ -38,6 +38,13 @@
       color: #666;
       text-align: left;
     }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
     .btn {
       height: 38px;
       padding: 0 14px;
@@ -55,13 +62,6 @@
       height: 32px;
       padding: 0 10px;
       font-size: 12px;
-    }
-    .pin-confirm-btn {
-      font-size: 11px;
-      padding: 0 12px;
-    }
-    .admin-btn {
-      margin-right: 8px;
     }
     .admin-tools {
       display: none;
@@ -158,14 +158,8 @@
       box-shadow: 0 4px 14px rgba(0,0,0,0.12);
     }
     .gallery-nav.show { display: inline-flex; }
-    .gallery-prev {
-      left: 0;
-      border-radius: 0 10px 10px 0;
-    }
-    .gallery-next {
-      right: 0;
-      border-radius: 10px 0 0 10px;
-    }
+    .gallery-prev { left: 0; border-radius: 0 10px 10px 0; }
+    .gallery-next { right: 0; border-radius: 10px 0 0 10px; }
     .gallery-viewport {
       overflow: hidden;
       width: 100%;
@@ -455,7 +449,6 @@
       .work-nav-next { right: 8px; }
       .work-nav-prev::after,
       .work-nav-next::after { display: none; }
-      .admin-btn { margin-right: 4px; }
     }
   </style>
 </head>
@@ -464,9 +457,11 @@
     <div class="topbar">
       <div class="title-box">
         <h1>배우 작품활동</h1>
-        <p>포스터를 누르면 작품 상세 정보가 열립니다.</p>
+        <p>노션 임베드 전용 간단 버전입니다.</p>
       </div>
-      <button id="adminBtn" class="btn admin-btn" type="button">관리자</button>
+      <div class="toolbar">
+        <button id="adminBtn" class="btn" type="button">관리자</button>
+      </div>
     </div>
 
     <div id="adminTools" class="admin-tools">
@@ -496,12 +491,12 @@
         <div class="field full">
           <label for="workPosterFile">대표 포스터 업로드</label>
           <input id="workPosterFile" class="input" type="file" accept="image/*" />
-          <div class="hint">대표 포스터 1장을 등록합니다. 이미지가 너무 크면 저장되지 않을 수 있습니다.</div>
+          <div class="hint">이미지는 작게 넣는 편이 안전합니다. 큰 이미지는 저장이 불안정할 수 있습니다.</div>
         </div>
         <div class="field full">
           <label for="workExtraFiles">추가 이미지 업로드</label>
           <input id="workExtraFiles" class="input" type="file" accept="image/*" multiple />
-          <div class="hint">상세 화면에서 볼 추가 이미지를 2~3장 정도 넣을 수 있습니다. 새로 선택하면 기존 추가 이미지를 대체합니다.</div>
+          <div class="hint">추가 이미지는 최대 2장 권장입니다.</div>
         </div>
         <div class="field full">
           <label for="workDesc">설명</label>
@@ -555,18 +550,15 @@
       <p>4자리 코드를 입력하시면 작품 추가·수정·삭제가 가능합니다.</p>
       <div class="pin-row">
         <input id="pinInput" class="pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="••••" />
-        <button id="pinConfirmBtn" class="btn dark pin-confirm-btn" type="button">확인</button>
+        <button id="pinConfirmBtn" class="btn dark" type="button">확인</button>
       </div>
       <div id="pinStatus" class="status"></div>
     </div>
   </div>
 
   <script>
-    const WIDGET_ID = 'actor_widget_page_001';
-    const DB_NAME = `actorWorksWidgetDB_${WIDGET_ID}`;
-    const STORE_NAME = 'kv';
-    const ITEMS_KEY = `items_${WIDGET_ID}`;
-    const ADMIN_KEY = `admin_${WIDGET_ID}`;
+    const WIDGET_ID = 'actor_widget_embed_001';
+    const STORAGE_KEY = `actor_widget_embed_data_${WIDGET_ID}`;
     const ADMIN_PIN = '0716';
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
@@ -582,7 +574,7 @@
       role: '주연',
       platform: '드라마',
       poster: PLACEHOLDER,
-      images: [PLACEHOLDER],
+      extras: [],
       desc: '여기에 작품 소개와 배역 관련 내용을 넣으면 됩니다.'
     }];
 
@@ -599,7 +591,6 @@
       pinInput: $('pinInput'), pinConfirmBtn: $('pinConfirmBtn'), pinStatus: $('pinStatus'), formStatus: $('formStatus')
     };
 
-    let db;
     let items = [];
     let isAdmin = false;
     let editingId = null;
@@ -624,60 +615,31 @@
       return 6;
     }
 
-    function openDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
-        request.onupgradeneeded = () => {
-          const db = request.result;
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME);
-          }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error || new Error('db open failed'));
-      });
-    }
-
-    function dbGet(key) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const req = tx.objectStore(STORE_NAME).get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error || new Error('db get failed'));
-      });
-    }
-
-    function dbSet(key, value) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const req = tx.objectStore(STORE_NAME).put(value, key);
-        req.onsuccess = () => resolve(true);
-        req.onerror = () => reject(req.error || new Error('db set failed'));
-      });
-    }
-
     function normalizeItems(list) {
-      return (Array.isArray(list) ? list : []).map(item => {
-        const poster = item.poster || PLACEHOLDER;
-        const images = Array.isArray(item.images) && item.images.length ? item.images.filter(Boolean) : [poster];
-        return { ...item, poster, images: images.length ? images : [poster] };
-      });
+      return (Array.isArray(list) ? list : []).map(item => ({
+        id: item.id || Date.now(),
+        title: item.title || '',
+        year: item.year || '',
+        role: item.role || '',
+        platform: item.platform || '',
+        poster: item.poster || PLACEHOLDER,
+        extras: Array.isArray(item.extras) ? item.extras.filter(Boolean) : [],
+        desc: item.desc || ''
+      }));
     }
 
-    async function loadState() {
-      db = await openDB();
-      const savedItems = await dbGet(ITEMS_KEY);
-      const savedAdmin = await dbGet(ADMIN_KEY);
-      items = normalizeItems(savedItems && savedItems.length ? savedItems : seedData);
-      isAdmin = savedAdmin === true;
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        items = normalizeItems(parsed && parsed.length ? parsed : seedData);
+      } catch (error) {
+        items = normalizeItems(seedData);
+      }
     }
 
-    async function saveItemsState() {
-      await dbSet(ITEMS_KEY, items);
-    }
-
-    async function saveAdminState() {
-      await dbSet(ADMIN_KEY, isAdmin);
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     }
 
     function escapeHtml(text) {
@@ -686,9 +648,8 @@
       return div.innerHTML;
     }
 
-    async function setAdminMode(value) {
+    function setAdminMode(value) {
       isAdmin = !!value;
-      await saveAdminState();
       ui.adminTools.classList.toggle('active', isAdmin);
       ui.adminBtn.textContent = isAdmin ? '관리자 모드 사용 중' : '관리자';
       if (!isAdmin) closeForm();
@@ -741,14 +702,14 @@
       `).join('');
 
       ui.galleryTrack.querySelectorAll('.delete-box').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const id = Number(btn.dataset.id);
           const ok = window.confirm('이 작품을 삭제하시겠습니까?');
           if (!ok) return;
+          items = items.filter(item => item.id !== id);
           try {
-            items = items.filter(item => item.id !== id);
-            await saveItemsState();
+            saveState();
             closeDetail();
             renderGallery();
             setFormStatus('작품을 삭제했습니다.');
@@ -771,10 +732,14 @@
       updateGalleryPosition(true);
     }
 
+    function getImageList(item) {
+      return [item.poster || PLACEHOLDER, ...(item.extras || [])].filter(Boolean);
+    }
+
     function updateDetailImage(item) {
-      const images = Array.isArray(item.images) && item.images.length ? item.images : [item.poster || PLACEHOLDER];
+      const images = getImageList(item);
       currentImageIndex = Math.max(0, Math.min(currentImageIndex, images.length - 1));
-      ui.detailImg.src = images[currentImageIndex] || item.poster || PLACEHOLDER;
+      ui.detailImg.src = images[currentImageIndex] || PLACEHOLDER;
       ui.imagePrevBtn.classList.toggle('show', images.length > 1);
       ui.imageNextBtn.classList.toggle('show', images.length > 1);
       ui.imageCount.classList.toggle('show', images.length > 1);
@@ -856,7 +821,7 @@
       ui.workPosterFile.value = '';
       ui.workExtraFiles.value = '';
       ui.workDesc.value = item.desc || '';
-      setFormStatus('');
+      setFormStatus('기존 이미지는 새 파일을 올리지 않으면 유지됩니다.');
       ui.formCard.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -898,20 +863,13 @@
       try {
         const existingItem = isEditing ? items.find(v => v.id === editingId) : null;
         let poster = existingItem?.poster || PLACEHOLDER;
-        let images = Array.isArray(existingItem?.images) && existingItem.images.length ? [...existingItem.images] : [poster];
+        let extras = Array.isArray(existingItem?.extras) ? [...existingItem.extras] : [];
         const posterFile = ui.workPosterFile.files[0];
         const extraFiles = ui.workExtraFiles.files;
 
         if (posterFile) poster = await fileToDataURL(posterFile);
         if (extraFiles && extraFiles.length) {
-          const extraImages = await filesToDataURLs(extraFiles, 3);
-          images = [poster, ...extraImages];
-        } else if (posterFile) {
-          images = [poster, ...images.slice(1, 4)];
-        } else if (!images.length) {
-          images = [poster];
-        } else {
-          images[0] = poster;
+          extras = await filesToDataURLs(extraFiles, 2);
         }
 
         const payload = {
@@ -921,18 +879,19 @@
           role: ui.workRole.value.trim(),
           platform: ui.workPlatform.value.trim(),
           poster: poster || PLACEHOLDER,
-          images: images.filter(Boolean).slice(0, 4),
+          extras,
           desc: ui.workDesc.value.trim()
         };
 
         if (isEditing) items = items.map(v => v.id === editingId ? payload : v);
         else items.unshift(payload);
 
-        await saveItemsState();
+        saveState();
         closeForm();
         renderGallery();
-      } catch (e) {
-        setFormStatus('저장하지 못했습니다. 이미지가 너무 크거나 브라우저 저장 한도를 넘었을 수 있습니다.', true);
+        setFormStatus('저장했습니다.');
+      } catch (error) {
+        setFormStatus('저장하지 못했습니다. 이미지 크기를 더 줄여서 다시 시도해 주세요.', true);
       } finally {
         ui.saveBtn.disabled = false;
       }
@@ -996,10 +955,10 @@
       setTimeout(() => ui.pinInput.focus(), 50);
     });
 
-    ui.pinConfirmBtn.addEventListener('click', async () => {
+    ui.pinConfirmBtn.addEventListener('click', () => {
       if (ui.pinInput.value === ADMIN_PIN) {
         ui.pinModal.classList.remove('active');
-        await setAdminMode(true);
+        setAdminMode(true);
       } else {
         ui.pinStatus.textContent = 'PIN이 올바르지 않습니다.';
       }
@@ -1009,7 +968,7 @@
       if (e.key === 'Enter') ui.pinConfirmBtn.click();
     });
 
-    ui.adminOffBtn.addEventListener('click', async () => { await setAdminMode(false); });
+    ui.adminOffBtn.addEventListener('click', () => setAdminMode(false));
     ui.openAddBtn.addEventListener('click', openAdd);
     ui.cancelBtn.addEventListener('click', closeForm);
     ui.saveBtn.addEventListener('click', saveWork);
@@ -1018,7 +977,7 @@
       e.stopPropagation();
       if (currentDetailIndex < 0) return;
       const item = items[currentDetailIndex];
-      const images = item.images && item.images.length ? item.images : [item.poster || PLACEHOLDER];
+      const images = getImageList(item);
       currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
       updateDetailImage(item);
     });
@@ -1027,7 +986,7 @@
       e.stopPropagation();
       if (currentDetailIndex < 0) return;
       const item = items[currentDetailIndex];
-      const images = item.images && item.images.length ? item.images : [item.poster || PLACEHOLDER];
+      const images = getImageList(item);
       currentImageIndex = (currentImageIndex + 1) % images.length;
       updateDetailImage(item);
     });
@@ -1056,20 +1015,9 @@
       updateGalleryPosition(true);
     });
 
-    (async function init() {
-      try {
-        await loadState();
-        await setAdminMode(isAdmin);
-        renderGallery();
-      } catch (e) {
-        items = normalizeItems(seedData);
-        isAdmin = false;
-        ui.adminTools.classList.remove('active');
-        ui.adminBtn.textContent = '관리자';
-        renderGallery();
-        setFormStatus('브라우저 저장소를 열지 못했습니다. 현재 환경에서는 저장이 유지되지 않을 수 있습니다.', true);
-      }
-    })();
+    loadState();
+    renderGallery();
+    setFormStatus('노션 임베드에서는 큰 이미지를 많이 넣으면 저장이 불안정할 수 있습니다.');
   </script>
 </body>
 </html>
