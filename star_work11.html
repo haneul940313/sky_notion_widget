@@ -730,6 +730,7 @@
     function closeEditor() {
       el.editorModal.classList.remove('active');
       resetEditorFields();
+      clearFileInputs();
       render();
     }
 
@@ -749,6 +750,11 @@
         results.push(await fileToDataURL(file));
       }
       return results;
+    }
+
+    function clearFileInputs() {
+      el.poster.value = '';
+      el.extras.value = '';
     }
 
     function escapeHtml(text) {
@@ -1053,10 +1059,15 @@
         }
 
         saveItems();
+        clearFileInputs();
         closeEditor();
         render();
       } catch (e) {
-        setEditorStatus('저장하지 못했습니다. 이미지 크기를 줄여 주세요.', true);
+        if (e && (e.name === 'QuotaExceededError' || String(e).toLowerCase().includes('quota'))) {
+          setEditorStatus('저장 용량이 부족합니다. 이미지 크기를 더 줄이거나 기존 작품 이미지를 정리해 주세요.', true);
+        } else {
+          setEditorStatus('저장하지 못했습니다. 이미지 크기를 줄여 다시 선택한 뒤 저장해 주세요.', true);
+        }
       }
     });
 
