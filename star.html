@@ -467,7 +467,7 @@
   <div class="wrap">
     <div class="topbar">
       <div class="title-box">
-        <h1>배우님 작품활동</h1>
+        <h1>배우 작품활동</h1>
         <p>포스터를 누르면 작품 상세 정보가 열립니다.</p>
       </div>
       <button id="adminBtn" class="btn">관리자</button>
@@ -565,8 +565,10 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'actor-works-widget-data';
-    const ADMIN_SESSION_KEY = 'actor-works-admin-session';
+    const DB_NAME = 'actorWorksWidgetDB';
+    const STORE_NAME = 'kv';
+    const ITEMS_KEY = 'items';
+    const ADMIN_KEY = 'admin';
     const ADMIN_PIN = '0716';
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
@@ -628,8 +630,9 @@
     const pinConfirmBtn = document.getElementById('pinConfirmBtn');
     const pinStatus = document.getElementById('pinStatus');
 
-    let items = normalizeItems(loadItems());
-    let isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+    let db;
+    let items = [];
+    let isAdmin = false;
     let editingId = null;
     let currentDetailIndex = -1;
     let currentImageIndex = 0;
@@ -642,30 +645,63 @@
     let isDragging = false;
     let moved = false;
 
-    function loadItems() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return seedData;
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) && parsed.length ? parsed : seedData;
-      } catch (e) {
-        return seedData;
-      }
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function dbGet(key) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function dbSet(key, value) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
     }
 
     function normalizeItems(data) {
-      return data.map(item => {
+      return (data || []).map(item => {
         const basePoster = item.poster || PLACEHOLDER;
-        const images = Array.isArray(item.images) && item.images.length
-          ? item.images.filter(Boolean)
-          : [basePoster];
+        const images = Array.isArray(item.images) && item.images.length ? item.images.filter(Boolean) : [basePoster];
         if (!images.length) images.push(basePoster);
         return { ...item, poster: basePoster, images };
       });
     }
 
-    function saveItems() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    async function loadState() {
+      db = await openDB();
+      const savedItems = await dbGet(ITEMS_KEY);
+      const savedAdmin = await dbGet(ADMIN_KEY);
+      items = normalizeItems(Array.isArray(savedItems) && savedItems.length ? savedItems : seedData);
+      isAdmin = savedAdmin === true;
+    }
+
+    async function saveItemsToDB() {
+      await dbSet(ITEMS_KEY, items);
+    }
+
+    async function saveAdminToDB(value) {
+      await dbSet(ADMIN_KEY, value);
     }
 
     function escapeHtml(text) {
@@ -739,9 +775,9 @@
       });
     }
 
-    function setAdminMode(value) {
+    async function setAdminMode(value) {
       isAdmin = value;
-      localStorage.setItem(ADMIN_SESSION_KEY, String(value));
+      await saveAdminToDB(value);
       adminTools.classList.toggle('active', value);
       adminBtn.textContent = value ? '관리자 모드 사용 중' : '관리자';
       if (!value) closeForm();
@@ -791,10 +827,10 @@
           closeDetail();
           openEdit(item.id);
         });
-        document.getElementById('deleteWorkBtn').addEventListener('click', () => {
+        document.getElementById('deleteWorkBtn').addEventListener('click', async () => {
           if (confirm('이 작품을 삭제하시겠습니까?')) {
             items = items.filter(v => v.id !== item.id);
-            saveItems();
+            await saveItemsToDB();
             closeDetail();
             renderGallery();
           }
@@ -875,13 +911,15 @@
         return;
       }
 
-      const existingItem = editingId ? items.find(v => v.id === editingId) : null;
-      let poster = existingItem?.poster || PLACEHOLDER;
-      let images = Array.isArray(existingItem?.images) && existingItem.images.length ? [...existingItem.images] : [poster];
-      const posterFile = workPosterFile.files[0];
-      const extraFiles = workExtraFiles.files;
+      saveBtn.disabled = true;
 
       try {
+        const existingItem = editingId ? items.find(v => v.id === editingId) : null;
+        let poster = existingItem?.poster || PLACEHOLDER;
+        let images = Array.isArray(existingItem?.images) && existingItem.images.length ? [...existingItem.images] : [poster];
+        const posterFile = workPosterFile.files[0];
+        const extraFiles = workExtraFiles.files;
+
         if (posterFile) poster = await fileToDataURL(posterFile);
         if (extraFiles && extraFiles.length) {
           const extraImages = await filesToDataURLs(extraFiles, 3);
@@ -894,38 +932,33 @@
         } else {
           images[0] = poster;
         }
+
+        const payload = {
+          id: editingId || Date.now(),
+          title,
+          year: workYear.value.trim(),
+          role: workRole.value.trim(),
+          platform: workPlatform.value.trim(),
+          poster: poster || PLACEHOLDER,
+          images: images.filter(Boolean).slice(0, 4),
+          desc: workDesc.value.trim()
+        };
+
+        if (editingId) {
+          items = items.map(v => v.id === editingId ? payload : v);
+        } else {
+          items.unshift(payload);
+        }
+
+        await saveItemsToDB();
+        renderGallery();
+        closeForm();
+        alert('등록했습니다.');
       } catch (e) {
-        alert('이미지 파일을 읽지 못했습니다.');
-        return;
+        alert('저장에 실패했습니다. 이미지 파일이 너무 크거나 브라우저 저장 한도를 넘었을 수 있습니다. 더 작은 이미지로 다시 시도해 주세요.');
+      } finally {
+        saveBtn.disabled = false;
       }
-
-      const payload = {
-        id: editingId || Date.now(),
-        title,
-        year: workYear.value.trim(),
-        role: workRole.value.trim(),
-        platform: workPlatform.value.trim(),
-        poster: poster || PLACEHOLDER,
-        images: images.filter(Boolean).slice(0, 4),
-        desc: workDesc.value.trim()
-      };
-
-      if (editingId) {
-        items = items.map(v => v.id === editingId ? payload : v);
-      } else {
-        items.unshift(payload);
-      }
-
-      try {
-        saveItems();
-      } catch (e) {
-        alert('저장에 실패했습니다. 이미지 파일이 너무 큰 경우일 수 있습니다. 더 작은 이미지로 다시 시도해 주세요.');
-        return;
-      }
-
-      renderGallery();
-      closeForm();
-      alert('등록했습니다.');
     }
 
     function pointerDown(x) {
@@ -938,8 +971,7 @@
 
     function pointerMove(x) {
       if (!isDragging) return;
-      const currentPosition = x;
-      const diff = currentPosition - startX;
+      const diff = x - startX;
       if (Math.abs(diff) > 6) moved = true;
       currentTranslate = prevTranslate + diff;
       galleryTrack.style.transform = `translateX(${currentTranslate}px)`;
@@ -987,10 +1019,10 @@
       setTimeout(() => pinInput.focus(), 50);
     });
 
-    pinConfirmBtn.addEventListener('click', () => {
+    pinConfirmBtn.addEventListener('click', async () => {
       if (pinInput.value === ADMIN_PIN) {
         pinModal.classList.remove('active');
-        setAdminMode(true);
+        await setAdminMode(true);
       } else {
         pinStatus.textContent = 'PIN이 올바르지 않습니다.';
       }
@@ -1000,7 +1032,7 @@
       if (e.key === 'Enter') pinConfirmBtn.click();
     });
 
-    adminOffBtn.addEventListener('click', () => setAdminMode(false));
+    adminOffBtn.addEventListener('click', async () => await setAdminMode(false));
     openAddBtn.addEventListener('click', openAdd);
     cancelBtn.addEventListener('click', closeForm);
     saveBtn.addEventListener('click', saveWork);
@@ -1047,8 +1079,20 @@
       updateGalleryPosition(true);
     });
 
-    setAdminMode(isAdmin);
-    renderGallery();
+    (async function init() {
+      try {
+        await loadState();
+        await setAdminMode(isAdmin);
+        renderGallery();
+      } catch (e) {
+        items = normalizeItems(seedData);
+        isAdmin = false;
+        adminTools.classList.remove('active');
+        adminBtn.textContent = '관리자';
+        renderGallery();
+        alert('브라우저 저장소를 열지 못했습니다. 일부 기능이 정상적으로 저장되지 않을 수 있습니다.');
+      }
+    })();
   </script>
 </body>
 </html>
