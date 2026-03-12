@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>배우 작품활동 테스트</title>
+  <title>배우 작품활동 위젯</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -13,16 +13,19 @@
       color: #111;
       background: #fff;
     }
+    button, input, textarea { font: inherit; }
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
       gap: 12px;
+      margin-bottom: 16px;
     }
     h1 {
       margin: 0;
       font-size: 22px;
+      line-height: 1.2;
+      text-align: left;
     }
     .btn {
       height: 36px;
@@ -37,12 +40,19 @@
       border-color: #111;
       color: #fff;
     }
+    .btn.danger {
+      color: #b42318;
+      border-color: #efc0c0;
+      background: #fff;
+    }
     .form {
       display: none;
       border: 1px solid #e8e8ed;
       border-radius: 14px;
       padding: 14px;
       margin-bottom: 16px;
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
     }
     .form.active {
       display: block;
@@ -76,9 +86,10 @@
       display: flex;
       gap: 8px;
       margin-top: 8px;
+      flex-wrap: wrap;
     }
     .status {
-      margin-top: 8px;
+      margin-top: 10px;
       font-size: 12px;
       color: #666;
       min-height: 18px;
@@ -96,6 +107,15 @@
       border-radius: 14px;
       overflow: hidden;
       background: #fff;
+      cursor: pointer;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .item:hover {
+      transform: translateY(-1px);
+    }
+    .item.active {
+      border-color: #111;
+      box-shadow: 0 0 0 2px rgba(17,17,17,0.08);
     }
     .thumb {
       aspect-ratio: 2 / 3;
@@ -111,18 +131,10 @@
     .body {
       padding: 10px;
     }
-    .title-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
     .title {
       font-size: 14px;
       font-weight: 700;
-      min-width: 0;
-      flex: 1;
+      margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -132,10 +144,15 @@
       color: #666;
       margin-bottom: 10px;
     }
-    .item-actions {
-      display: flex;
-      gap: 6px;
-      justify-content: flex-end;
+    .desc {
+      font-size: 12px;
+      color: #444;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 54px;
     }
     .empty {
       border: 1px dashed #d9d9de;
@@ -167,6 +184,10 @@
       <input id="year" class="input" type="text" />
     </div>
     <div class="field">
+      <label for="role">역할</label>
+      <input id="role" class="input" type="text" />
+    </div>
+    <div class="field">
       <label for="platform">플랫폼 / 구분</label>
       <input id="platform" class="input" type="text" />
     </div>
@@ -175,12 +196,17 @@
       <input id="poster" class="input" type="file" accept="image/*" />
     </div>
     <div class="field">
+      <label for="extras">추가 이미지 업로드</label>
+      <input id="extras" class="input" type="file" accept="image/*" multiple />
+    </div>
+    <div class="field">
       <label for="desc">설명</label>
       <textarea id="desc" class="textarea"></textarea>
     </div>
     <div class="actions">
       <button id="saveBtn" class="btn dark" type="button">저장</button>
-      <button id="cancelBtn" class="btn" type="button">취소</button>
+      <button id="deleteBtn" class="btn danger" type="button">삭제</button>
+      <button id="cancelBtn" class="btn" type="button">닫기</button>
     </div>
     <div id="status" class="status"></div>
   </div>
@@ -188,7 +214,8 @@
   <div id="list" class="list"></div>
 
   <script>
-    const STORAGE_KEY = "actor_widget_clean_test_v1";
+    const WIDGET_ID = 'actor_widget_embed_001';
+    const STORAGE_KEY = `actor_widget_embed_data_${WIDGET_ID}`;
     const PLACEHOLDER =
       'data:image/svg+xml;utf8,' +
       encodeURIComponent(`
@@ -201,34 +228,40 @@
     const seedData = [
       {
         id: Date.now(),
-        title: "샘플 작품",
-        year: "2026",
-        platform: "드라마",
+        title: '샘플 작품',
+        year: '2026',
+        role: '주연',
+        platform: '드라마',
         poster: PLACEHOLDER,
-        desc: "여기에 작품 소개를 적으면 됩니다."
+        extras: [],
+        desc: '여기에 작품 소개를 적으면 됩니다.'
       }
     ];
 
     const el = {
-      addBtn: document.getElementById("addBtn"),
-      form: document.getElementById("form"),
-      title: document.getElementById("title"),
-      year: document.getElementById("year"),
-      platform: document.getElementById("platform"),
-      poster: document.getElementById("poster"),
-      desc: document.getElementById("desc"),
-      saveBtn: document.getElementById("saveBtn"),
-      cancelBtn: document.getElementById("cancelBtn"),
-      status: document.getElementById("status"),
-      list: document.getElementById("list")
+      addBtn: document.getElementById('addBtn'),
+      form: document.getElementById('form'),
+      title: document.getElementById('title'),
+      year: document.getElementById('year'),
+      role: document.getElementById('role'),
+      platform: document.getElementById('platform'),
+      poster: document.getElementById('poster'),
+      extras: document.getElementById('extras'),
+      desc: document.getElementById('desc'),
+      saveBtn: document.getElementById('saveBtn'),
+      deleteBtn: document.getElementById('deleteBtn'),
+      cancelBtn: document.getElementById('cancelBtn'),
+      status: document.getElementById('status'),
+      list: document.getElementById('list')
     };
 
     let items = [];
     let editingId = null;
+    let activeId = null;
 
-    function setStatus(text = "", isError = false) {
+    function setStatus(text = '', isError = false) {
       el.status.textContent = text;
-      el.status.classList.toggle("error", !!isError);
+      el.status.classList.toggle('error', !!isError);
     }
 
     function loadItems() {
@@ -246,18 +279,23 @@
     }
 
     function openForm() {
-      el.form.classList.add("active");
+      el.form.classList.add('active');
     }
 
     function closeForm() {
-      el.form.classList.remove("active");
+      el.form.classList.remove('active');
       editingId = null;
-      el.title.value = "";
-      el.year.value = "";
-      el.platform.value = "";
-      el.poster.value = "";
-      el.desc.value = "";
-      setStatus("");
+      activeId = null;
+      el.title.value = '';
+      el.year.value = '';
+      el.role.value = '';
+      el.platform.value = '';
+      el.poster.value = '';
+      el.extras.value = '';
+      el.desc.value = '';
+      el.deleteBtn.style.display = 'none';
+      setStatus('');
+      render();
     }
 
     function fileToDataURL(file) {
@@ -269,88 +307,117 @@
       });
     }
 
-    async function render() {
+    async function filesToDataURLs(fileList, limit) {
+      const files = Array.from(fileList || []).slice(0, limit);
+      const results = [];
+      for (const file of files) {
+        results.push(await fileToDataURL(file));
+      }
+      return results;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    function openEdit(item) {
+      editingId = item.id;
+      activeId = item.id;
+      el.title.value = item.title || '';
+      el.year.value = item.year || '';
+      el.role.value = item.role || '';
+      el.platform.value = item.platform || '';
+      el.poster.value = '';
+      el.extras.value = '';
+      el.desc.value = item.desc || '';
+      el.deleteBtn.style.display = 'inline-flex';
+      openForm();
+      setStatus('기존 이미지는 새 파일을 올리지 않으면 유지됩니다.');
+      render();
+    }
+
+    function render() {
       if (!items.length) {
         el.list.innerHTML = '<div class="empty">등록된 작품이 없습니다.</div>';
         return;
       }
 
       el.list.innerHTML = items.map(item => `
-        <div class="item">
+        <div class="item ${activeId === item.id ? 'active' : ''}" data-id="${item.id}">
           <div class="thumb">
-            <img src="${item.poster || PLACEHOLDER}" alt="${(item.title || "").replace(/"/g, "&quot;")}" />
+            <img src="${item.poster || PLACEHOLDER}" alt="${(item.title || '').replace(/"/g, '&quot;')}" />
           </div>
           <div class="body">
-            <div class="title-row">
-              <div class="title">${item.title || ""}</div>
-              <button class="btn delete-btn" type="button" data-id="${item.id}">삭제</button>
-            </div>
-            <div class="meta">${item.year || ""} · ${item.platform || ""}</div>
-            <div class="item-actions">
-              <button class="btn dark edit-btn" type="button" data-id="${item.id}">수정</button>
-            </div>
+            <div class="title">${escapeHtml(item.title)}</div>
+            <div class="meta">${escapeHtml(item.year || '')} · ${escapeHtml(item.role || '')} · ${escapeHtml(item.platform || '')}</div>
+            <div class="desc">${escapeHtml(item.desc || '')}</div>
           </div>
         </div>
-      `).join("");
+      `).join('');
 
-      el.list.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = Number(btn.dataset.id);
-          const ok = window.confirm("이 작품을 삭제하시겠습니까?");
-          if (!ok) return;
-          items = items.filter(item => item.id !== id);
-          saveItems();
-          render();
-        });
-      });
-
-      el.list.querySelectorAll(".edit-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = Number(btn.dataset.id);
+      el.list.querySelectorAll('.item').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = Number(card.dataset.id);
           const item = items.find(v => v.id === id);
           if (!item) return;
-          editingId = id;
-          el.title.value = item.title || "";
-          el.year.value = item.year || "";
-          el.platform.value = item.platform || "";
-          el.desc.value = item.desc || "";
-          el.poster.value = "";
-          openForm();
-          setStatus("기존 이미지는 새 파일을 올리지 않으면 유지됩니다.");
+          openEdit(item);
         });
       });
     }
 
-    el.addBtn.addEventListener("click", () => {
+    el.addBtn.addEventListener('click', () => {
       editingId = null;
+      activeId = null;
+      el.deleteBtn.style.display = 'none';
       openForm();
+      setStatus('새 작품을 추가합니다.');
+      render();
     });
 
-    el.cancelBtn.addEventListener("click", () => {
+    el.cancelBtn.addEventListener('click', () => {
       closeForm();
     });
 
-    el.saveBtn.addEventListener("click", async () => {
+    el.deleteBtn.addEventListener('click', () => {
+      if (!editingId) return;
+      const ok = window.confirm('이 작품을 삭제하시겠습니까?');
+      if (!ok) return;
+      items = items.filter(v => v.id !== editingId);
+      saveItems();
+      closeForm();
+      render();
+    });
+
+    el.saveBtn.addEventListener('click', async () => {
       const title = el.title.value.trim();
       if (!title) {
-        setStatus("작품명을 입력해 주세요.", true);
+        setStatus('작품명을 입력해 주세요.', true);
         return;
       }
 
       try {
         const existing = editingId ? items.find(v => v.id === editingId) : null;
         let poster = existing?.poster || PLACEHOLDER;
+        let extras = Array.isArray(existing?.extras) ? [...existing.extras] : [];
 
         if (el.poster.files[0]) {
           poster = await fileToDataURL(el.poster.files[0]);
+        }
+
+        if (el.extras.files.length) {
+          extras = await filesToDataURLs(el.extras.files, 2);
         }
 
         const payload = {
           id: editingId || Date.now(),
           title,
           year: el.year.value.trim(),
+          role: el.role.value.trim(),
           platform: el.platform.value.trim(),
           poster,
+          extras,
           desc: el.desc.value.trim()
         };
 
@@ -364,12 +431,14 @@
         closeForm();
         render();
       } catch (e) {
-        setStatus("저장하지 못했습니다. 이미지 크기를 줄여 주세요.", true);
+        setStatus('저장하지 못했습니다. 이미지 크기를 줄여 주세요.', true);
       }
     });
 
     loadItems();
+    el.deleteBtn.style.display = 'none';
     render();
+    setStatus('카드를 누르면 수정 폼이 열리고, 폼 안에서 삭제할 수 있습니다.');
   </script>
 </body>
 </html>
