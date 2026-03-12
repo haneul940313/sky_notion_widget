@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>배우 작품활동 테스트</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: #111;
+      background: #fff;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+    .btn {
+      height: 36px;
+      padding: 0 14px;
+      border: 1px solid #d9d9de;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .btn.dark {
+      background: #111;
+      border-color: #111;
+      color: #fff;
+    }
+    .form {
+      display: none;
+      border: 1px solid #e8e8ed;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .form.active {
+      display: block;
+    }
+    .field {
+      margin-bottom: 10px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: #444;
+    }
+    .input, .textarea {
+      width: 100%;
+      border: 1px solid #d9d9de;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      outline: none;
+    }
+    .input {
+      height: 38px;
+      padding: 0 12px;
+    }
+    .textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+      min-height: 18px;
+    }
+    .status.error {
+      color: #c62828;
+    }
+    .list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .item {
+      border: 1px solid #e8e8ed;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .thumb {
+      aspect-ratio: 2 / 3;
+      background: #ececf1;
+      overflow: hidden;
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .body {
+      padding: 10px;
+    }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      min-width: 0;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .item-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+    .empty {
+      border: 1px dashed #d9d9de;
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      color: #777;
+    }
+    @media (max-width: 760px) {
+      .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>배우 작품활동</h1>
+    <button id="addBtn" class="btn dark" type="button">추가</button>
+  </div>
+
+  <div id="form" class="form">
+    <div class="field">
+      <label for="title">작품명</label>
+      <input id="title" class="input" type="text" />
+    </div>
+    <div class="field">
+      <label for="year">공개일 / 연도</label>
+      <input id="year" class="input" type="text" />
+    </div>
+    <div class="field">
+      <label for="platform">플랫폼 / 구분</label>
+      <input id="platform" class="input" type="text" />
+    </div>
+    <div class="field">
+      <label for="poster">대표 포스터 업로드</label>
+      <input id="poster" class="input" type="file" accept="image/*" />
+    </div>
+    <div class="field">
+      <label for="desc">설명</label>
+      <textarea id="desc" class="textarea"></textarea>
+    </div>
+    <div class="actions">
+      <button id="saveBtn" class="btn dark" type="button">저장</button>
+      <button id="cancelBtn" class="btn" type="button">취소</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <div id="list" class="list"></div>
+
+  <script>
+    const STORAGE_KEY = "actor_widget_clean_test_v1";
+    const PLACEHOLDER =
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
+          <rect width="400" height="600" fill="#ececf1"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9a9aa3" font-size="24" font-family="sans-serif">NO IMAGE</text>
+        </svg>
+      `);
+
+    const seedData = [
+      {
+        id: Date.now(),
+        title: "샘플 작품",
+        year: "2026",
+        platform: "드라마",
+        poster: PLACEHOLDER,
+        desc: "여기에 작품 소개를 적으면 됩니다."
+      }
+    ];
+
+    const el = {
+      addBtn: document.getElementById("addBtn"),
+      form: document.getElementById("form"),
+      title: document.getElementById("title"),
+      year: document.getElementById("year"),
+      platform: document.getElementById("platform"),
+      poster: document.getElementById("poster"),
+      desc: document.getElementById("desc"),
+      saveBtn: document.getElementById("saveBtn"),
+      cancelBtn: document.getElementById("cancelBtn"),
+      status: document.getElementById("status"),
+      list: document.getElementById("list")
+    };
+
+    let items = [];
+    let editingId = null;
+
+    function setStatus(text = "", isError = false) {
+      el.status.textContent = text;
+      el.status.classList.toggle("error", !!isError);
+    }
+
+    function loadItems() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        items = Array.isArray(parsed) && parsed.length ? parsed : seedData;
+      } catch (e) {
+        items = seedData;
+      }
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function openForm() {
+      el.form.classList.add("active");
+    }
+
+    function closeForm() {
+      el.form.classList.remove("active");
+      editingId = null;
+      el.title.value = "";
+      el.year.value = "";
+      el.platform.value = "";
+      el.poster.value = "";
+      el.desc.value = "";
+      setStatus("");
+    }
+
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function render() {
+      if (!items.length) {
+        el.list.innerHTML = '<div class="empty">등록된 작품이 없습니다.</div>';
+        return;
+      }
+
+      el.list.innerHTML = items.map(item => `
+        <div class="item">
+          <div class="thumb">
+            <img src="${item.poster || PLACEHOLDER}" alt="${(item.title || "").replace(/"/g, "&quot;")}" />
+          </div>
+          <div class="body">
+            <div class="title-row">
+              <div class="title">${item.title || ""}</div>
+              <button class="btn delete-btn" type="button" data-id="${item.id}">삭제</button>
+            </div>
+            <div class="meta">${item.year || ""} · ${item.platform || ""}</div>
+            <div class="item-actions">
+              <button class="btn dark edit-btn" type="button" data-id="${item.id}">수정</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      el.list.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.dataset.id);
+          const ok = window.confirm("이 작품을 삭제하시겠습니까?");
+          if (!ok) return;
+          items = items.filter(item => item.id !== id);
+          saveItems();
+          render();
+        });
+      });
+
+      el.list.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.dataset.id);
+          const item = items.find(v => v.id === id);
+          if (!item) return;
+          editingId = id;
+          el.title.value = item.title || "";
+          el.year.value = item.year || "";
+          el.platform.value = item.platform || "";
+          el.desc.value = item.desc || "";
+          el.poster.value = "";
+          openForm();
+          setStatus("기존 이미지는 새 파일을 올리지 않으면 유지됩니다.");
+        });
+      });
+    }
+
+    el.addBtn.addEventListener("click", () => {
+      editingId = null;
+      openForm();
+    });
+
+    el.cancelBtn.addEventListener("click", () => {
+      closeForm();
+    });
+
+    el.saveBtn.addEventListener("click", async () => {
+      const title = el.title.value.trim();
+      if (!title) {
+        setStatus("작품명을 입력해 주세요.", true);
+        return;
+      }
+
+      try {
+        const existing = editingId ? items.find(v => v.id === editingId) : null;
+        let poster = existing?.poster || PLACEHOLDER;
+
+        if (el.poster.files[0]) {
+          poster = await fileToDataURL(el.poster.files[0]);
+        }
+
+        const payload = {
+          id: editingId || Date.now(),
+          title,
+          year: el.year.value.trim(),
+          platform: el.platform.value.trim(),
+          poster,
+          desc: el.desc.value.trim()
+        };
+
+        if (editingId) {
+          items = items.map(v => v.id === editingId ? payload : v);
+        } else {
+          items.unshift(payload);
+        }
+
+        saveItems();
+        closeForm();
+        render();
+      } catch (e) {
+        setStatus("저장하지 못했습니다. 이미지 크기를 줄여 주세요.", true);
+      }
+    });
+
+    loadItems();
+    render();
+  </script>
+</body>
+</html>
