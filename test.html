@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>삭제 테스트</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      margin: 24px;
+      color: #111;
+    }
+    .wrap {
+      max-width: 520px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    input {
+      flex: 1;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      height: 38px;
+      padding: 0 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>삭제 테스트</h1>
+
+    <div class="row">
+      <input id="nameInput" type="text" placeholder="이름 입력" />
+      <button id="addBtn" type="button">추가</button>
+    </div>
+
+    <ul id="list"></ul>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "delete_test_items_v1";
+
+    const nameInput = document.getElementById("nameInput");
+    const addBtn = document.getElementById("addBtn");
+    const list = document.getElementById("list");
+    const status = document.getElementById("status");
+
+    let items = [];
+
+    function loadItems() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        items = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(items)) items = [];
+      } catch (e) {
+        items = [];
+        status.textContent = "불러오기 실패";
+      }
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function render() {
+      list.innerHTML = "";
+
+      if (!items.length) {
+        list.innerHTML = "<li>목록 없음</li>";
+        return;
+      }
+
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item.name + " ";
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.textContent = "삭제";
+        delBtn.addEventListener("click", () => {
+          items = items.filter((v) => v.id !== item.id);
+          saveItems();
+          render();
+          status.textContent = "삭제됨";
+        });
+
+        li.appendChild(delBtn);
+        list.appendChild(li);
+      });
+    }
+
+    addBtn.addEventListener("click", () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        status.textContent = "이름을 입력하세요";
+        return;
+      }
+
+      items.unshift({
+        id: Date.now(),
+        name
+      });
+
+      saveItems();
+      render();
+      nameInput.value = "";
+      status.textContent = "추가됨";
+    });
+
+    loadItems();
+    render();
+  </script>
+</body>
+</html>
