@@ -14,6 +14,7 @@
       background: #fff;
     }
     button, input, textarea { font: inherit; }
+
     .topbar {
       display: flex;
       justify-content: space-between;
@@ -31,6 +32,7 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
     .btn {
       height: 36px;
@@ -65,18 +67,30 @@
       color: #c62828;
     }
 
+    .list-viewport {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
     .list {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      display: flex;
       gap: 12px;
+      align-items: stretch;
+      min-width: 100%;
     }
     .item {
+      position: relative;
+      flex: 0 0 calc((100% - 48px) / 5);
+      min-width: 180px;
       border: 1px solid #e8e8ed;
       border-radius: 14px;
       overflow: hidden;
       background: #fff;
       cursor: pointer;
-      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, opacity .15s ease;
     }
     .item:hover {
       transform: translateY(-1px);
@@ -84,6 +98,16 @@
     .item.active {
       border-color: #111;
       box-shadow: 0 0 0 2px rgba(17,17,17,0.08);
+    }
+    .item.admin {
+      cursor: grab;
+    }
+    .item.dragging {
+      opacity: 0.45;
+    }
+    .item.drag-over {
+      border-color: #111;
+      box-shadow: 0 0 0 2px rgba(17,17,17,0.14);
     }
     .thumb {
       position: relative;
@@ -96,6 +120,7 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      pointer-events: none;
     }
     .thumb-delete-btn {
       position: absolute;
@@ -118,7 +143,6 @@
     .item.admin .thumb-delete-btn {
       display: inline-flex;
     }
-
     .body {
       padding: 10px;
     }
@@ -146,6 +170,7 @@
       min-height: 54px;
     }
     .empty {
+      width: 100%;
       border: 1px dashed #d9d9de;
       border-radius: 14px;
       padding: 24px;
@@ -166,7 +191,6 @@
     .modal.active {
       display: flex;
     }
-
     .modal-box {
       width: min(760px, 100%);
       background: #fff;
@@ -223,7 +247,6 @@
       z-index: 2;
     }
     .image-count.show { display: inline-flex; }
-
     .modal-content {
       padding: 18px;
     }
@@ -251,7 +274,6 @@
       margin-top: 16px;
       flex-wrap: wrap;
     }
-
     .work-nav-btn {
       position: fixed;
       top: 50%;
@@ -352,13 +374,13 @@
     }
 
     @media (max-width: 980px) {
-      .list {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+      .item {
+        flex-basis: calc((100% - 24px) / 3);
       }
     }
     @media (max-width: 760px) {
-      .list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .item {
+        flex-basis: calc((100% - 12px) / 2);
       }
       .modal-inner {
         grid-template-columns: 1fr;
@@ -385,12 +407,14 @@
     <div class="top-actions">
       <button id="changePinBtn" class="btn" type="button" style="display:none;">비밀번호 변경</button>
       <button id="adminBtn" class="btn" type="button">관리자 모드</button>
-      <button id="addBtn" class="btn dark" type="button">추가</button>
+      <button id="addBtn" class="btn dark" type="button" style="display:none;">추가</button>
     </div>
   </div>
 
   <div id="pageStatus" class="status-bar"></div>
-  <div id="list" class="list"></div>
+  <div class="list-viewport">
+    <div id="list" class="list"></div>
+  </div>
 
   <div id="detailModal" class="modal">
     <button id="workPrevBtn" class="work-nav-btn work-nav-prev" data-label="이전" type="button">‹</button>
@@ -601,6 +625,7 @@
     let isAdmin = false;
     let adminPin = DEFAULT_ADMIN_PIN;
     let pendingDeleteId = null;
+    let dragId = null;
 
     function setPageStatus(text = '', isError = false) {
       el.pageStatus.textContent = text;
@@ -692,8 +717,7 @@
       el.editorModal.classList.add('active');
     }
 
-    function closeEditor() {
-      el.editorModal.classList.remove('active');
+    function resetEditorFields() {
       editingId = null;
       activeId = null;
       el.title.value = '';
@@ -705,6 +729,11 @@
       el.desc.value = '';
       el.editorTitle.textContent = '작품 추가';
       setEditorStatus('');
+    }
+
+    function closeEditor() {
+      el.editorModal.classList.remove('active');
+      resetEditorFields();
       render();
     }
 
@@ -756,24 +785,18 @@
       if (!items.length) return;
       if (index < 0) index = items.length - 1;
       if (index >= items.length) index = 0;
-
       currentDetailIndex = index;
       currentImageIndex = 0;
-
       const item = items[index];
       activeId = item.id;
-
       el.detailTitle.textContent = item.title || '';
       el.detailYear.textContent = item.year || '-';
       el.detailRole.textContent = item.role || '-';
       el.detailPlatform.textContent = item.platform || '-';
       el.detailDesc.textContent = item.desc || '';
-
       updateDetailImage(item);
       updateWorkNavButtons();
-
       el.detailEditBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-
       el.detailModal.classList.add('active');
       render();
     }
@@ -781,7 +804,6 @@
     function openEdit(item) {
       editingId = item.id;
       activeId = item.id;
-
       el.title.value = item.title || '';
       el.year.value = item.year || '';
       el.role.value = item.role || '';
@@ -789,11 +811,56 @@
       el.poster.value = '';
       el.extras.value = '';
       el.desc.value = item.desc || '';
-
       el.editorTitle.textContent = '작품 수정';
       openEditor();
       setEditorStatus('기존 이미지는 새 파일을 올리지 않으면 유지됩니다.');
       render();
+    }
+
+    function reorderItems(fromId, toId) {
+      if (fromId == null || toId == null || fromId === toId) return;
+      const fromIndex = items.findIndex(v => v.id === fromId);
+      const toIndex = items.findIndex(v => v.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return;
+      const [moved] = items.splice(fromIndex, 1);
+      items.splice(toIndex, 0, moved);
+      saveItems();
+      render();
+    }
+
+    function attachDragHandlers() {
+      if (!isAdmin) return;
+      el.list.querySelectorAll('.item').forEach(card => {
+        card.setAttribute('draggable', 'true');
+        card.addEventListener('dragstart', (e) => {
+          if (e.target.closest('.thumb-delete-btn')) {
+            e.preventDefault();
+            return;
+          }
+          dragId = Number(card.dataset.id);
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', () => {
+          dragId = null;
+          card.classList.remove('dragging');
+          el.list.querySelectorAll('.item').forEach(v => v.classList.remove('drag-over'));
+        });
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (Number(card.dataset.id) === dragId) return;
+          card.classList.add('drag-over');
+        });
+        card.addEventListener('dragleave', () => {
+          card.classList.remove('drag-over');
+        });
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const toId = Number(card.dataset.id);
+          card.classList.remove('drag-over');
+          reorderItems(dragId, toId);
+        });
+      });
     }
 
     function render() {
@@ -831,15 +898,17 @@
             openDetailByIndex(index);
           });
         });
+
+        attachDragHandlers();
       }
 
       el.adminBtn.textContent = isAdmin ? '관리자 모드 종료' : '관리자 모드';
+      el.addBtn.style.display = isAdmin ? 'inline-flex' : 'none';
       el.changePinBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-
       setPageStatus(
         isAdmin
-          ? '관리자 모드가 켜져 있습니다. 카드 이미지 위 삭제 버튼과 상세의 수정 기능을 사용할 수 있습니다.'
-          : '카드를 누르면 상세가 열립니다. 수정과 삭제는 관리자 모드에서만 가능합니다.'
+          ? '관리자 모드가 켜져 있습니다. 삭제 가능, 드래그로 순서 변경 가능.'
+          : '카드를 누르면 상세가 열립니다. 추가/수정/삭제는 관리자 모드에서만 가능합니다.'
       );
     }
 
@@ -880,7 +949,6 @@
       const current = el.currentPinInput.value.trim();
       const next = el.newPinInput.value.trim();
       const confirmNext = el.newPinConfirmInput.value.trim();
-
       if (current !== adminPin) {
         setChangePinStatus('현재 비밀번호가 올바르지 않습니다.', true);
         return;
@@ -893,7 +961,6 @@
         setChangePinStatus('새 비밀번호 확인이 일치하지 않습니다.', true);
         return;
       }
-
       adminPin = next;
       saveAdminPin();
       closeChangePinModal();
@@ -903,13 +970,8 @@
     el.changePinCancelBtn.addEventListener('click', closeChangePinModal);
 
     el.addBtn.addEventListener('click', () => {
-      if (!isAdmin) {
-        setPageStatus('추가는 관리자 모드에서만 가능합니다.', true);
-        return;
-      }
-
-      editingId = null;
-      activeId = null;
+      if (!isAdmin) return;
+      resetEditorFields();
       el.editorTitle.textContent = '작품 추가';
       openEditor();
       setEditorStatus('새 작품을 추가합니다.');
@@ -920,16 +982,13 @@
 
     el.deleteConfirmBtn.addEventListener('click', () => {
       if (!isAdmin || !pendingDeleteId) return;
-
       items = items.filter(v => v.id !== pendingDeleteId);
       saveItems();
-
       if (editingId === pendingDeleteId) closeEditor();
       if (activeId === pendingDeleteId) {
         closeDetail();
         activeId = null;
       }
-
       closeDeleteModal();
       render();
     });
