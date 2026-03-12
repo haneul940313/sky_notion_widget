@@ -15,7 +15,6 @@
     button, input, textarea { font: inherit; }
     .wrap {
       width: 100%;
-      max-width: none;
       margin: 0;
       padding: 8px 0;
     }
@@ -24,7 +23,8 @@
       justify-content: space-between;
       align-items: flex-start;
       gap: 12px;
-      margin-bottom: 14px;
+      margin: 0 0 14px;
+      padding: 0 6px 0 0;
     }
     .title-box h1 {
       margin: 0;
@@ -60,13 +60,18 @@
       font-size: 11px;
       padding: 0 12px;
     }
+    .admin-btn {
+      margin-right: 8px;
+    }
     .admin-tools {
       display: none;
       gap: 8px;
       align-items: center;
       margin-bottom: 14px;
     }
-    .admin-tools.active { display: flex; }
+    .admin-tools.active {
+      display: flex;
+    }
     .card {
       background: #fff;
       border: 1px solid #e8e8ed;
@@ -78,7 +83,9 @@
       display: none;
       margin-bottom: 14px;
     }
-    .form-card.active { display: block; }
+    .form-card.active {
+      display: block;
+    }
     .form-title {
       margin: 0 0 12px;
       font-size: 17px;
@@ -125,6 +132,7 @@
       gap: 8px;
       margin-top: 4px;
     }
+
     .gallery-section {
       position: relative;
       width: 100%;
@@ -220,6 +228,7 @@
       border-radius: 16px;
       background: #fff;
     }
+
     .modal, .pin-modal {
       position: fixed;
       inset: 0;
@@ -241,7 +250,6 @@
     .modal-inner {
       display: grid;
       grid-template-columns: 260px 1fr;
-      gap: 0;
     }
     .modal-poster {
       background: #ececf1;
@@ -352,6 +360,7 @@
     .work-nav-prev::after { left: 24px; }
     .work-nav-next { right: max(14px, calc(50% - 430px)); }
     .work-nav-next::after { right: 24px; }
+
     .pin-box {
       width: min(340px, 100%);
       background: #fff;
@@ -389,27 +398,21 @@
       color: #d11a2a;
       min-height: 16px;
     }
+
     @media (max-width: 980px) {
       .poster-card { flex: 0 0 calc((100% - 20px) / 3); }
     }
     @media (max-width: 760px) {
-      .wrap { padding: 8px 0; }
       .grid { grid-template-columns: 1fr; }
       .poster-card { flex: 0 0 calc((100% - 10px) / 2); }
       .modal-inner { grid-template-columns: 1fr; }
-      .modal-poster {
-        min-height: auto;
-        aspect-ratio: 2.2 / 3;
-      }
-      .work-nav-btn {
-        font-size: 28px;
-        width: 24px;
-        height: 36px;
-      }
+      .modal-poster { min-height: auto; aspect-ratio: 2.2 / 3; }
+      .work-nav-btn { font-size: 28px; width: 24px; height: 36px; }
       .work-nav-prev { left: 8px; }
       .work-nav-next { right: 8px; }
       .work-nav-prev::after,
       .work-nav-next::after { display: none; }
+      .admin-btn { margin-right: 4px; }
     }
   </style>
 </head>
@@ -420,12 +423,12 @@
         <h1>배우 작품활동</h1>
         <p>포스터를 누르면 작품 상세 정보가 열립니다.</p>
       </div>
-      <button id="adminBtn" class="btn">관리자</button>
+      <button id="adminBtn" class="btn admin-btn" type="button">관리자</button>
     </div>
 
     <div id="adminTools" class="admin-tools">
-      <button id="openAddBtn" class="btn dark">작품 추가</button>
-      <button id="adminOffBtn" class="btn">관리자 모드 종료</button>
+      <button id="openAddBtn" class="btn dark" type="button">작품 추가</button>
+      <button id="adminOffBtn" class="btn" type="button">관리자 모드 종료</button>
     </div>
 
     <div id="formCard" class="card form-card">
@@ -515,8 +518,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'actorWorksWidgetData_v3';
-    const ADMIN_KEY = 'actorWorksAdmin_v3';
+    const STORAGE_KEY = 'actorWorksWidget_clean_1';
+    const ADMIN_KEY = 'actorWorksWidget_admin_clean_1';
     const ADMIN_PIN = '0716';
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
@@ -536,43 +539,17 @@
       desc: '여기에 작품 소개와 배역 관련 내용을 넣으면 됩니다.'
     }];
 
-    const el = {
-      adminBtn: document.getElementById('adminBtn'),
-      adminTools: document.getElementById('adminTools'),
-      adminOffBtn: document.getElementById('adminOffBtn'),
-      openAddBtn: document.getElementById('openAddBtn'),
-      formCard: document.getElementById('formCard'),
-      formTitle: document.getElementById('formTitle'),
-      workTitle: document.getElementById('workTitle'),
-      workYear: document.getElementById('workYear'),
-      workRole: document.getElementById('workRole'),
-      workPlatform: document.getElementById('workPlatform'),
-      workPosterFile: document.getElementById('workPosterFile'),
-      workExtraFiles: document.getElementById('workExtraFiles'),
-      workDesc: document.getElementById('workDesc'),
-      saveBtn: document.getElementById('saveBtn'),
-      cancelBtn: document.getElementById('cancelBtn'),
-      galleryTrack: document.getElementById('galleryTrack'),
-      galleryViewport: document.getElementById('galleryViewport'),
-      galleryPrevBtn: document.getElementById('galleryPrevBtn'),
-      galleryNextBtn: document.getElementById('galleryNextBtn'),
-      detailModal: document.getElementById('detailModal'),
-      detailImg: document.getElementById('detailImg'),
-      detailTitle: document.getElementById('detailTitle'),
-      detailYear: document.getElementById('detailYear'),
-      detailRole: document.getElementById('detailRole'),
-      detailPlatform: document.getElementById('detailPlatform'),
-      detailDesc: document.getElementById('detailDesc'),
-      detailActions: document.getElementById('detailActions'),
-      imagePrevBtn: document.getElementById('imagePrevBtn'),
-      imageNextBtn: document.getElementById('imageNextBtn'),
-      imageCount: document.getElementById('imageCount'),
-      workPrevBtn: document.getElementById('workPrevBtn'),
-      workNextBtn: document.getElementById('workNextBtn'),
-      pinModal: document.getElementById('pinModal'),
-      pinInput: document.getElementById('pinInput'),
-      pinConfirmBtn: document.getElementById('pinConfirmBtn'),
-      pinStatus: document.getElementById('pinStatus')
+    const $ = (id) => document.getElementById(id);
+    const ui = {
+      adminBtn: $('adminBtn'), adminTools: $('adminTools'), adminOffBtn: $('adminOffBtn'), openAddBtn: $('openAddBtn'),
+      formCard: $('formCard'), formTitle: $('formTitle'), workTitle: $('workTitle'), workYear: $('workYear'), workRole: $('workRole'),
+      workPlatform: $('workPlatform'), workPosterFile: $('workPosterFile'), workExtraFiles: $('workExtraFiles'), workDesc: $('workDesc'),
+      saveBtn: $('saveBtn'), cancelBtn: $('cancelBtn'), galleryTrack: $('galleryTrack'), galleryViewport: $('galleryViewport'),
+      galleryPrevBtn: $('galleryPrevBtn'), galleryNextBtn: $('galleryNextBtn'), detailModal: $('detailModal'), detailImg: $('detailImg'),
+      detailTitle: $('detailTitle'), detailYear: $('detailYear'), detailRole: $('detailRole'), detailPlatform: $('detailPlatform'),
+      detailDesc: $('detailDesc'), detailActions: $('detailActions'), imagePrevBtn: $('imagePrevBtn'), imageNextBtn: $('imageNextBtn'),
+      imageCount: $('imageCount'), workPrevBtn: $('workPrevBtn'), workNextBtn: $('workNextBtn'), pinModal: $('pinModal'),
+      pinInput: $('pinInput'), pinConfirmBtn: $('pinConfirmBtn'), pinStatus: $('pinStatus')
     };
 
     let items = [];
@@ -588,45 +565,59 @@
     let isDragging = false;
     let moved = false;
 
+    function safeAlert(msg) {
+      window.alert(msg);
+    }
+
+    function safeConfirm(msg) {
+      return window.confirm(msg);
+    }
+
     function getCardsPerView() {
       if (window.innerWidth <= 760) return 2;
       if (window.innerWidth <= 980) return 3;
       return 5;
     }
 
-    function normalizeItems(data) {
-      return (data || []).map(item => {
-        const basePoster = item.poster || PLACEHOLDER;
-        const images = Array.isArray(item.images) && item.images.length ? item.images.filter(Boolean) : [basePoster];
-        return { ...item, poster: basePoster, images: images.length ? images : [basePoster] };
+    function normalizeItems(list) {
+      return (Array.isArray(list) ? list : []).map(item => {
+        const poster = item.poster || PLACEHOLDER;
+        const images = Array.isArray(item.images) && item.images.length ? item.images.filter(Boolean) : [poster];
+        return { ...item, poster, images: images.length ? images : [poster] };
       });
     }
 
     function loadState() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        const parsed = saved ? JSON.parse(saved) : null;
-        items = normalizeItems(Array.isArray(parsed) && parsed.length ? parsed : seedData);
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        items = normalizeItems(parsed && parsed.length ? parsed : seedData);
       } catch (e) {
         items = normalizeItems(seedData);
       }
       isAdmin = localStorage.getItem(ADMIN_KEY) === 'true';
     }
 
-    function persistItems() {
+    function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     }
 
-    function persistAdmin() {
+    function saveAdmin() {
       localStorage.setItem(ADMIN_KEY, isAdmin ? 'true' : 'false');
     }
 
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
     function setAdminMode(value) {
-      isAdmin = value;
-      persistAdmin();
-      el.adminTools.classList.toggle('active', value);
-      el.adminBtn.textContent = value ? '관리자 모드 사용 중' : '관리자';
-      if (!value) closeForm();
+      isAdmin = !!value;
+      saveAdmin();
+      ui.adminTools.classList.toggle('active', isAdmin);
+      ui.adminBtn.textContent = isAdmin ? '관리자 모드 사용 중' : '관리자';
+      if (!isAdmin) closeForm();
       renderGallery();
     }
 
@@ -635,34 +626,34 @@
     }
 
     function getCardStep() {
-      const firstCard = el.galleryTrack.querySelector('.poster-card');
+      const firstCard = ui.galleryTrack.querySelector('.poster-card');
       if (!firstCard) return 0;
-      const style = window.getComputedStyle(el.galleryTrack);
-      const gap = parseFloat(style.columnGap || style.gap || 0) || 0;
+      const style = window.getComputedStyle(ui.galleryTrack);
+      const gap = parseFloat(style.gap || style.columnGap || 0) || 0;
       return firstCard.getBoundingClientRect().width + gap;
     }
 
     function updateGalleryPosition(animate = true) {
       const step = getCardStep();
       const translate = -(galleryIndex * step);
-      el.galleryTrack.classList.toggle('dragging', !animate);
-      el.galleryTrack.style.transform = `translateX(${translate}px)`;
+      ui.galleryTrack.classList.toggle('dragging', !animate);
+      ui.galleryTrack.style.transform = `translateX(${translate}px)`;
       prevTranslate = translate;
       currentTranslate = translate;
-      el.galleryPrevBtn.classList.toggle('show', items.length > cardsPerView && galleryIndex > 0);
-      el.galleryNextBtn.classList.toggle('show', items.length > cardsPerView && galleryIndex < maxGalleryIndex());
+      ui.galleryPrevBtn.classList.toggle('show', items.length > cardsPerView && galleryIndex > 0);
+      ui.galleryNextBtn.classList.toggle('show', items.length > cardsPerView && galleryIndex < maxGalleryIndex());
     }
 
     function renderGallery() {
       cardsPerView = getCardsPerView();
       if (!items.length) {
-        el.galleryTrack.innerHTML = '<div class="empty">등록된 작품이 없습니다.</div>';
-        el.galleryPrevBtn.classList.remove('show');
-        el.galleryNextBtn.classList.remove('show');
+        ui.galleryTrack.innerHTML = '<div class="empty">등록된 작품이 없습니다.</div>';
+        ui.galleryPrevBtn.classList.remove('show');
+        ui.galleryNextBtn.classList.remove('show');
         return;
       }
 
-      el.galleryTrack.innerHTML = items.map((item, index) => `
+      ui.galleryTrack.innerHTML = items.map((item, index) => `
         <div class="poster-card" data-index="${index}">
           <div class="poster-img-wrap">
             <img class="poster-img" src="${item.poster || PLACEHOLDER}" alt="${(item.title || '').replace(/"/g, '&quot;')}" onerror="this.src='${PLACEHOLDER}'" />
@@ -674,124 +665,119 @@
         </div>
       `).join('');
 
-      if (galleryIndex > maxGalleryIndex()) galleryIndex = maxGalleryIndex();
-      el.galleryTrack.querySelectorAll('.poster-card').forEach(card => {
+      ui.galleryTrack.querySelectorAll('.poster-card').forEach(card => {
         card.addEventListener('click', () => {
           if (moved) return;
           const index = Number(card.dataset.index);
           if (!Number.isNaN(index)) openDetailByIndex(index);
         });
       });
-      updateGalleryPosition(true);
-    }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text || '';
-      return div.innerHTML;
+      if (galleryIndex > maxGalleryIndex()) galleryIndex = maxGalleryIndex();
+      updateGalleryPosition(true);
     }
 
     function updateDetailImage(item) {
       const images = Array.isArray(item.images) && item.images.length ? item.images : [item.poster || PLACEHOLDER];
-      if (currentImageIndex < 0) currentImageIndex = 0;
-      if (currentImageIndex > images.length - 1) currentImageIndex = images.length - 1;
-      el.detailImg.src = images[currentImageIndex] || item.poster || PLACEHOLDER;
-      el.imagePrevBtn.classList.toggle('show', images.length > 1);
-      el.imageNextBtn.classList.toggle('show', images.length > 1);
-      el.imageCount.classList.toggle('show', images.length > 1);
-      el.imageCount.textContent = images.length > 1 ? `${currentImageIndex + 1} / ${images.length}` : '';
+      currentImageIndex = Math.max(0, Math.min(currentImageIndex, images.length - 1));
+      ui.detailImg.src = images[currentImageIndex] || item.poster || PLACEHOLDER;
+      ui.imagePrevBtn.classList.toggle('show', images.length > 1);
+      ui.imageNextBtn.classList.toggle('show', images.length > 1);
+      ui.imageCount.classList.toggle('show', images.length > 1);
+      ui.imageCount.textContent = images.length > 1 ? `${currentImageIndex + 1} / ${images.length}` : '';
     }
 
     function updateWorkNavButtons() {
       const show = items.length > 1;
-      el.workPrevBtn.classList.toggle('show', show);
-      el.workNextBtn.classList.toggle('show', show);
+      ui.workPrevBtn.classList.toggle('show', show);
+      ui.workNextBtn.classList.toggle('show', show);
     }
 
     function openDetailByIndex(index) {
       if (!items.length) return;
       if (index < 0) index = items.length - 1;
-      if (index > items.length - 1) index = 0;
+      if (index >= items.length) index = 0;
       currentDetailIndex = index;
       currentImageIndex = 0;
       const item = items[index];
 
-      el.detailTitle.textContent = item.title || '';
-      el.detailYear.textContent = item.year || '-';
-      el.detailRole.textContent = item.role || '-';
-      el.detailPlatform.textContent = item.platform || '-';
-      el.detailDesc.textContent = item.desc || '';
+      ui.detailTitle.textContent = item.title || '';
+      ui.detailYear.textContent = item.year || '-';
+      ui.detailRole.textContent = item.role || '-';
+      ui.detailPlatform.textContent = item.platform || '-';
+      ui.detailDesc.textContent = item.desc || '';
       updateDetailImage(item);
       updateWorkNavButtons();
 
       if (isAdmin) {
-        el.detailActions.innerHTML = `
-          <button class="btn small dark" id="editWorkBtn" type="button">수정</button>
-          <button class="btn small" id="deleteWorkBtn" type="button">삭제</button>
-          <button class="btn small" id="closeDetailBtn" type="button">닫기</button>
+        ui.detailActions.innerHTML = `
+          <button class="btn small dark" id="detailEditBtn" type="button">수정</button>
+          <button class="btn small" id="detailDeleteBtn" type="button">삭제</button>
+          <button class="btn small" id="detailCloseBtn" type="button">닫기</button>
         `;
-        document.getElementById('editWorkBtn').addEventListener('click', () => {
+        $('detailEditBtn').addEventListener('click', () => {
           closeDetail();
           openEdit(item.id);
         });
-        document.getElementById('deleteWorkBtn').addEventListener('click', () => {
-          const ok = window.confirm('이 작품을 삭제하시겠습니까?');
+        $('detailDeleteBtn').addEventListener('click', () => {
+          const ok = safeConfirm('이 작품을 삭제하시겠습니까?');
           if (!ok) return;
           items = items.filter(v => v.id !== item.id);
-          persistItems();
+          saveState();
           closeDetail();
           renderGallery();
-          window.alert('삭제했습니다.');
+          safeAlert('삭제했습니다.');
         });
-        document.getElementById('closeDetailBtn').addEventListener('click', closeDetail);
+        $('detailCloseBtn').addEventListener('click', closeDetail);
       } else {
-        el.detailActions.innerHTML = `<button class="btn small" id="closeDetailBtn" type="button">닫기</button>`;
-        document.getElementById('closeDetailBtn').addEventListener('click', closeDetail);
+        ui.detailActions.innerHTML = `<button class="btn small" id="detailCloseBtn" type="button">닫기</button>`;
+        $('detailCloseBtn').addEventListener('click', closeDetail);
       }
 
-      el.detailModal.classList.add('active');
+      ui.detailModal.classList.add('active');
     }
 
     function closeDetail() {
-      el.detailModal.classList.remove('active');
+      ui.detailModal.classList.remove('active');
     }
 
     function resetForm() {
       editingId = null;
-      el.formTitle.textContent = '작품 추가';
-      el.workTitle.value = '';
-      el.workYear.value = '';
-      el.workRole.value = '';
-      el.workPlatform.value = '';
-      el.workPosterFile.value = '';
-      el.workExtraFiles.value = '';
-      el.workDesc.value = '';
-    }
-
-    function closeForm() {
-      el.formCard.classList.remove('active');
-      resetForm();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      ui.formTitle.textContent = '작품 추가';
+      ui.workTitle.value = '';
+      ui.workYear.value = '';
+      ui.workRole.value = '';
+      ui.workPlatform.value = '';
+      ui.workPosterFile.value = '';
+      ui.workExtraFiles.value = '';
+      ui.workDesc.value = '';
     }
 
     function openAdd() {
       resetForm();
-      el.formCard.classList.add('active');
+      ui.formCard.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function openEdit(id) {
       const item = items.find(v => v.id === id);
       if (!item) return;
       editingId = id;
-      el.formTitle.textContent = '작품 수정';
-      el.workTitle.value = item.title || '';
-      el.workYear.value = item.year || '';
-      el.workRole.value = item.role || '';
-      el.workPlatform.value = item.platform || '';
-      el.workPosterFile.value = '';
-      el.workExtraFiles.value = '';
-      el.workDesc.value = item.desc || '';
-      el.formCard.classList.add('active');
+      ui.formTitle.textContent = '작품 수정';
+      ui.workTitle.value = item.title || '';
+      ui.workYear.value = item.year || '';
+      ui.workRole.value = item.role || '';
+      ui.workPlatform.value = item.platform || '';
+      ui.workPosterFile.value = '';
+      ui.workExtraFiles.value = '';
+      ui.workDesc.value = item.desc || '';
+      ui.formCard.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeForm() {
+      ui.formCard.classList.remove('active');
+      resetForm();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -806,30 +792,28 @@
 
     async function filesToDataURLs(fileList, limit) {
       const files = Array.from(fileList || []).slice(0, limit);
-      const results = [];
-      for (const file of files) {
-        results.push(await fileToDataURL(file));
-      }
-      return results;
+      const out = [];
+      for (const file of files) out.push(await fileToDataURL(file));
+      return out;
     }
 
     async function saveWork() {
       const isEditing = !!editingId;
-      const title = el.workTitle.value.trim();
+      const title = ui.workTitle.value.trim();
       if (!title) {
-        window.alert('작품명을 입력해 주세요.');
-        el.workTitle.focus();
+        safeAlert('작품명을 입력해 주세요.');
+        ui.workTitle.focus();
         return;
       }
 
-      el.saveBtn.disabled = true;
+      ui.saveBtn.disabled = true;
 
       try {
         const existingItem = isEditing ? items.find(v => v.id === editingId) : null;
         let poster = existingItem?.poster || PLACEHOLDER;
         let images = Array.isArray(existingItem?.images) && existingItem.images.length ? [...existingItem.images] : [poster];
-        const posterFile = el.workPosterFile.files[0];
-        const extraFiles = el.workExtraFiles.files;
+        const posterFile = ui.workPosterFile.files[0];
+        const extraFiles = ui.workExtraFiles.files;
 
         if (posterFile) {
           poster = await fileToDataURL(posterFile);
@@ -849,28 +833,28 @@
         const payload = {
           id: isEditing ? editingId : Date.now(),
           title,
-          year: el.workYear.value.trim(),
-          role: el.workRole.value.trim(),
-          platform: el.workPlatform.value.trim(),
+          year: ui.workYear.value.trim(),
+          role: ui.workRole.value.trim(),
+          platform: ui.workPlatform.value.trim(),
           poster: poster || PLACEHOLDER,
           images: images.filter(Boolean).slice(0, 4),
-          desc: el.workDesc.value.trim()
+          desc: ui.workDesc.value.trim()
         };
 
         if (isEditing) {
           items = items.map(v => v.id === editingId ? payload : v);
         } else {
-          items = [payload, ...items];
+          items.unshift(payload);
         }
 
-        persistItems();
+        saveState();
         renderGallery();
         closeForm();
-        window.alert(isEditing ? '수정했습니다.' : '등록했습니다.');
+        safeAlert(isEditing ? '수정했습니다.' : '등록했습니다.');
       } catch (e) {
-        window.alert('저장에 실패했습니다. 이미지 파일이 너무 크거나 브라우저 저장 한도를 넘었을 수 있습니다. 더 작은 이미지로 다시 시도해 주세요.');
+        safeAlert('저장에 실패했습니다. 이미지가 너무 크거나 브라우저 저장 한도를 넘었을 수 있습니다. 더 작은 이미지로 다시 시도해 주세요.');
       } finally {
-        el.saveBtn.disabled = false;
+        ui.saveBtn.disabled = false;
       }
     }
 
@@ -878,8 +862,8 @@
       isDragging = true;
       moved = false;
       startX = x;
-      el.galleryViewport.classList.add('dragging');
-      el.galleryTrack.classList.add('dragging');
+      ui.galleryViewport.classList.add('dragging');
+      ui.galleryTrack.classList.add('dragging');
     }
 
     function pointerMove(x) {
@@ -887,14 +871,14 @@
       const diff = x - startX;
       if (Math.abs(diff) > 6) moved = true;
       currentTranslate = prevTranslate + diff;
-      el.galleryTrack.style.transform = `translateX(${currentTranslate}px)`;
+      ui.galleryTrack.style.transform = `translateX(${currentTranslate}px)`;
     }
 
     function pointerUp() {
       if (!isDragging) return;
       isDragging = false;
-      el.galleryViewport.classList.remove('dragging');
-      el.galleryTrack.classList.remove('dragging');
+      ui.galleryViewport.classList.remove('dragging');
+      ui.galleryTrack.classList.remove('dragging');
       const movedBy = currentTranslate - prevTranslate;
       if (movedBy < -50 && galleryIndex < maxGalleryIndex()) galleryIndex += 1;
       if (movedBy > 50 && galleryIndex > 0) galleryIndex -= 1;
@@ -902,88 +886,88 @@
       setTimeout(() => { moved = false; }, 0);
     }
 
-    el.galleryPrevBtn.addEventListener('click', () => {
+    ui.galleryPrevBtn.addEventListener('click', () => {
       if (galleryIndex > 0) {
         galleryIndex -= 1;
         updateGalleryPosition(true);
       }
     });
 
-    el.galleryNextBtn.addEventListener('click', () => {
+    ui.galleryNextBtn.addEventListener('click', () => {
       if (galleryIndex < maxGalleryIndex()) {
         galleryIndex += 1;
         updateGalleryPosition(true);
       }
     });
 
-    el.galleryViewport.addEventListener('mousedown', (e) => pointerDown(e.clientX));
-    el.galleryViewport.addEventListener('mousemove', (e) => pointerMove(e.clientX));
-    el.galleryViewport.addEventListener('mouseup', pointerUp);
-    el.galleryViewport.addEventListener('mouseleave', pointerUp);
-    el.galleryViewport.addEventListener('touchstart', (e) => pointerDown(e.touches[0].clientX), { passive: true });
-    el.galleryViewport.addEventListener('touchmove', (e) => pointerMove(e.touches[0].clientX), { passive: true });
-    el.galleryViewport.addEventListener('touchend', pointerUp);
+    ui.galleryViewport.addEventListener('mousedown', (e) => pointerDown(e.clientX));
+    ui.galleryViewport.addEventListener('mousemove', (e) => pointerMove(e.clientX));
+    ui.galleryViewport.addEventListener('mouseup', pointerUp);
+    ui.galleryViewport.addEventListener('mouseleave', pointerUp);
+    ui.galleryViewport.addEventListener('touchstart', (e) => pointerDown(e.touches[0].clientX), { passive: true });
+    ui.galleryViewport.addEventListener('touchmove', (e) => pointerMove(e.touches[0].clientX), { passive: true });
+    ui.galleryViewport.addEventListener('touchend', pointerUp);
 
-    el.adminBtn.addEventListener('click', () => {
+    ui.adminBtn.addEventListener('click', () => {
       if (isAdmin) return;
-      el.pinInput.value = '';
-      el.pinStatus.textContent = '';
-      el.pinModal.classList.add('active');
-      setTimeout(() => el.pinInput.focus(), 50);
+      ui.pinInput.value = '';
+      ui.pinStatus.textContent = '';
+      ui.pinModal.classList.add('active');
+      setTimeout(() => ui.pinInput.focus(), 50);
     });
 
-    el.pinConfirmBtn.addEventListener('click', () => {
-      if (el.pinInput.value === ADMIN_PIN) {
-        el.pinModal.classList.remove('active');
+    ui.pinConfirmBtn.addEventListener('click', () => {
+      if (ui.pinInput.value === ADMIN_PIN) {
+        ui.pinModal.classList.remove('active');
         setAdminMode(true);
       } else {
-        el.pinStatus.textContent = 'PIN이 올바르지 않습니다.';
+        ui.pinStatus.textContent = 'PIN이 올바르지 않습니다.';
       }
     });
 
-    el.pinInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') el.pinConfirmBtn.click();
+    ui.pinInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') ui.pinConfirmBtn.click();
     });
 
-    el.adminOffBtn.addEventListener('click', () => setAdminMode(false));
-    el.openAddBtn.addEventListener('click', openAdd);
-    el.cancelBtn.addEventListener('click', closeForm);
-    el.saveBtn.addEventListener('click', saveWork);
+    ui.adminOffBtn.addEventListener('click', () => setAdminMode(false));
+    ui.openAddBtn.addEventListener('click', openAdd);
+    ui.cancelBtn.addEventListener('click', closeForm);
+    ui.saveBtn.addEventListener('click', saveWork);
 
-    el.imagePrevBtn.addEventListener('click', (e) => {
+    ui.imagePrevBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (currentDetailIndex < 0) return;
       const item = items[currentDetailIndex];
-      const images = Array.isArray(item.images) && item.images.length ? item.images : [item.poster || PLACEHOLDER];
+      const images = item.images && item.images.length ? item.images : [item.poster || PLACEHOLDER];
       currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
       updateDetailImage(item);
     });
 
-    el.imageNextBtn.addEventListener('click', (e) => {
+    ui.imageNextBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (currentDetailIndex < 0) return;
       const item = items[currentDetailIndex];
-      const images = Array.isArray(item.images) && item.images.length ? item.images : [item.poster || PLACEHOLDER];
+      const images = item.images && item.images.length ? item.images : [item.poster || PLACEHOLDER];
       currentImageIndex = (currentImageIndex + 1) % images.length;
       updateDetailImage(item);
     });
 
-    el.workPrevBtn.addEventListener('click', (e) => {
+    ui.workPrevBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       openDetailByIndex(currentDetailIndex - 1);
     });
 
-    el.workNextBtn.addEventListener('click', (e) => {
+    ui.workNextBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       openDetailByIndex(currentDetailIndex + 1);
     });
 
-    el.detailModal.addEventListener('click', (e) => {
-      if (e.target === el.detailModal) closeDetail();
+    ui.detailModal.addEventListener('click', (e) => {
+      if (e.target === ui.detailModal) closeDetail();
     });
 
-    el.pinModal.addEventListener('click', (e) => {
-      if (e.target === el.pinModal) el.pinModal.classList.remove('active');
+    ui.pinModal.addEventListener('click', (e) => {
+      if (e.target === ui.pinModal) ui.pinModal.classList.remove('active');
     });
 
     window.addEventListener('resize', () => {
