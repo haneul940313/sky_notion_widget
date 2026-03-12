@@ -511,11 +511,13 @@
       <div class="field">
         <label for="poster">대표 포스터 업로드</label>
         <input id="poster" class="input" type="file" accept="image/*" />
-        <div class="hint">이미지는 업로드 시 자동으로 압축되어 저장됩니다. 세로형 이미지를 권장합니다.</div>iv>
+        <div class="hint">이미지는 업로드 시 자동으로 압축되어 저장됩니다. 세로형 이미지를 권장합니다.</div>
+      </div>
       <div class="field">
         <label for="extras">추가 이미지 업로드</label>
         <input id="extras" class="input" type="file" accept="image/*" multiple />
-        <div class<div class="hint">추가 이미지는 최대 2장까지 자동 압축 후 저장됩니다.</div>iv>
+        <div class="hint">추가 이미지는 최대 2장까지 자동 압축 후 저장됩니다.</div>
+      </div>
       <div class="field">
         <label for="desc">설명</label>
         <textarea id="desc" class="textarea"></textarea>
@@ -732,7 +734,7 @@
       render();
     }
 
-    function ffunction fileToDataURL(file) {
+    function fileToDataURL(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
@@ -749,65 +751,6 @@
           img.onload = () => resolve(img);
           img.onerror = reject;
           img.src = reader.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function compressImageFile(file, options = {}) {
-      const {
-        maxWidth = 900,
-        maxHeight = 1350,
-        quality = 0.78,
-        mimeType = 'image/jpeg'
-      } = options;
-
-      const img = await loadImageFromFile(file);
-      let { width, height } = img;
-      const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
-      width = Math.max(1, Math.round(width * ratio));
-      height = Math.max(1, Math.round(height * ratio));
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d', { alpha: false });
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, height);
-      ctx.drawImage(img, 0, 0, width, height);
-
-      let output = canvas.toDataURL(mimeType, quality);
-
-      if (output.length > 900000) {
-        output = canvas.toDataURL(mimeType, 0.65);
-      }
-      if (output.length > 700000) {
-        const secondCanvas = document.createElement('canvas');
-        secondCanvas.width = Math.max(1, Math.round(width * 0.85));
-        secondCanvas.height = Math.max(1, Math.round(height * 0.85));
-        const secondCtx = secondCanvas.getContext('2d', { alpha: false });
-        secondCtx.fillStyle = '#ffffff';
-        secondCtx.fillRect(0, 0, secondCanvas.width, secondCanvas.height);
-        secondCtx.drawImage(canvas, 0, 0, secondCanvas.width, secondCanvas.height);
-        output = secondCanvas.toDataURL(mimeType, 0.6);
-      }
-
-      return output;
-    }
-
-    async function filesToDataURLs(fileList, limit) {
-      const files = Array.from(fileList || []).slice(0, limit);
-      const results = [];
-      for (const file of files) {
-        results.push(await compressImageFile(file, {
-          maxWidth: 900,
-          maxHeight: 1350,
-          quality: 0.72
-        }));
-      }
-      return results;
-    }        img.src = reader.result;
         };
         reader.onerror = reject;
         reader.readAsDataURL(file);
@@ -1023,7 +966,12 @@
       el.adminBtn.textContent = isAdmin ? '관리자 모드 종료' : '관리자 모드';
       el.addBtn.style.display = isAdmin ? 'inline-flex' : 'none';
       el.changePinBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-      setP }
+      setPageStatus(
+        isAdmin
+          ? '관리자 모드가 켜져 있습니다. 삭제 가능, 드래그로 순서 변경 가능.'
+          : '카드를 누르면 상세가 열립니다. 추가/수정/삭제는 관리자 모드에서만 가능합니다.'
+      );
+    }
 
     el.adminBtn.addEventListener('click', () => {
       if (isAdmin) {
@@ -1063,14 +1011,11 @@
       const next = el.newPinInput.value.trim();
       const confirmNext = el.newPinConfirmInput.value.trim();
       if (current !== adminPin) {
-        setChif (el.poster.files[0]) {
-          const file = el.poster.files[0];
-          poster = await compressImageFile(file, {
-            maxWidth: 1000,
-            maxHeight: 1500,
-            quality: 0.76
-          });
-        }tatus('새 비밀번호는 4자리 숫자로 입력해 주세요.', true);
+        setChangePinStatus('현재 비밀번호가 올바르지 않습니다.', true);
+        return;
+      }
+      if (!/^\d{4}$/.test(next)) {
+        setChangePinStatus('새 비밀번호는 4자리 숫자로 입력해 주세요.', true);
         return;
       }
       if (next !== confirmNext) {
