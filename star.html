@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>배우 작품활동 위젯</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background: #f6f6f7;
+      color: #111;
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .title-box h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+    .title-box p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: #666;
+    }
+    button, input, textarea {
+      font: inherit;
+    }
+    .btn {
+      height: 38px;
+      padding: 0 14px;
+      border: 1px solid #d9d9de;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .btn.dark {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+    .btn.small {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+    .admin-tools {
+      display: none;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .admin-tools.active {
+      display: flex;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e8e8ed;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+    }
+    .form-card {
+      display: none;
+      margin-bottom: 14px;
+    }
+    .form-card.active {
+      display: block;
+    }
+    .form-title {
+      margin: 0 0 12px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field {
+      margin-bottom: 10px;
+    }
+    .field.full {
+      grid-column: 1 / -1;
+    }
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #444;
+    }
+    .input, .textarea {
+      width: 100%;
+      border: 1px solid #d9d9de;
+      border-radius: 10px;
+      background: #fff;
+      outline: none;
+    }
+    .input {
+      height: 38px;
+      padding: 0 12px;
+    }
+    .textarea {
+      min-height: 100px;
+      padding: 10px 12px;
+      resize: vertical;
+    }
+    .hint {
+      margin-top: 5px;
+      font-size: 11px;
+      color: #777;
+      line-height: 1.4;
+    }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .poster-card {
+      background: #fff;
+      border: 1px solid #e8e8ed;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      transition: transform .15s ease;
+    }
+    .poster-card:hover {
+      transform: translateY(-2px);
+    }
+    .poster-img-wrap {
+      aspect-ratio: 2 / 3;
+      background: #ececf1;
+      overflow: hidden;
+    }
+    .poster-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .poster-info {
+      padding: 10px;
+    }
+    .poster-title {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .poster-meta {
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .empty {
+      padding: 30px 14px;
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      background: #fff;
+      border: 1px dashed #d9d9de;
+      border-radius: 16px;
+    }
+    .modal,
+    .pin-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0,0,0,0.45);
+      z-index: 50;
+    }
+    .modal.active,
+    .pin-modal.active {
+      display: flex;
+    }
+    .modal-box {
+      width: min(760px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .modal-inner {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 0;
+    }
+    .modal-poster {
+      background: #ececf1;
+      min-height: 360px;
+    }
+    .modal-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .modal-content {
+      padding: 18px;
+    }
+    .modal-content h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.25;
+    }
+    .meta-list {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #444;
+    }
+    .desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #222;
+      white-space: pre-wrap;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .pin-box {
+      width: min(340px, 100%);
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .pin-box h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+    .pin-box p {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+    .pin-row {
+      display: flex;
+      gap: 8px;
+    }
+    .pin-input {
+      flex: 1;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid #d9d9de;
+      border-radius: 10px;
+      outline: none;
+      letter-spacing: 4px;
+      text-align: center;
+      font-size: 18px;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #d11a2a;
+      min-height: 16px;
+    }
+    @media (max-width: 760px) {
+      .gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .modal-inner {
+        grid-template-columns: 1fr;
+      }
+      .modal-poster {
+        min-height: auto;
+        aspect-ratio: 2 / 3;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title-box">
+        <h1>배우 작품활동</h1>
+        <p>포스터를 누르면 작품 상세 정보가 열립니다.</p>
+      </div>
+      <button id="adminBtn" class="btn">관리자</button>
+    </div>
+
+    <div id="adminTools" class="admin-tools">
+      <button id="openAddBtn" class="btn dark">작품 추가</button>
+      <button id="adminOffBtn" class="btn">관리자 모드 종료</button>
+    </div>
+
+    <div id="formCard" class="card form-card">
+      <h2 id="formTitle" class="form-title">작품 추가</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="workTitle">작품명</label>
+          <input id="workTitle" class="input" type="text" placeholder="예: 드라마 제목" />
+        </div>
+        <div class="field">
+          <label for="workYear">공개일 / 연도</label>
+          <input id="workYear" class="input" type="text" placeholder="예: 2026.03 / 2025" />
+        </div>
+        <div class="field">
+          <label for="workRole">역할</label>
+          <input id="workRole" class="input" type="text" placeholder="예: 주연 / 특별출연" />
+        </div>
+        <div class="field">
+          <label for="workPlatform">플랫폼 / 구분</label>
+          <input id="workPlatform" class="input" type="text" placeholder="예: 드라마 / 영화 / OTT" />
+        </div>
+        <div class="field full">
+          <label for="workPosterUrl">포스터 이미지 URL</label>
+          <input id="workPosterUrl" class="input" type="text" placeholder="https://..." />
+          <div class="hint">이미지 주소를 넣거나, 아래 파일 업로드를 사용하면 됩니다.</div>
+        </div>
+        <div class="field full">
+          <label for="workPosterFile">포스터 파일 업로드</label>
+          <input id="workPosterFile" class="input" type="file" accept="image/*" />
+          <div class="hint">파일 업로드는 현재 브라우저에 저장됩니다. 이미지가 너무 크면 저장 한도 때문에 안 될 수 있습니다.</div>
+        </div>
+        <div class="field full">
+          <label for="workDesc">설명</label>
+          <textarea id="workDesc" class="textarea" placeholder="작품 소개, 배역, 메모 등을 적어주세요."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button id="saveBtn" class="btn dark">저장</button>
+        <button id="cancelBtn" class="btn">취소</button>
+      </div>
+    </div>
+
+    <div id="gallery" class="gallery"></div>
+  </div>
+
+  <div id="detailModal" class="modal">
+    <div class="modal-box">
+      <div class="modal-inner">
+        <div class="modal-poster"><img id="detailImg" src="" alt="포스터" /></div>
+        <div class="modal-content">
+          <h2 id="detailTitle"></h2>
+          <div class="meta-list">
+            <div><strong>공개일</strong> <span id="detailYear"></span></div>
+            <div><strong>역할</strong> <span id="detailRole"></span></div>
+            <div><strong>플랫폼</strong> <span id="detailPlatform"></span></div>
+          </div>
+          <div id="detailDesc" class="desc"></div>
+          <div id="detailActions" class="modal-actions"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pinModal" class="pin-modal">
+    <div class="pin-box">
+      <h3>관리자 PIN</h3>
+      <p>4자리 코드를 입력하면 작품 추가·수정·삭제가 가능합니다.</p>
+      <div class="pin-row">
+        <input id="pinInput" class="pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="••••" />
+        <button id="pinConfirmBtn" class="btn dark">확인</button>
+      </div>
+      <div id="pinStatus" class="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'actor-works-widget-data';
+    const ADMIN_SESSION_KEY = 'actor-works-admin-session';
+    const ADMIN_PIN = '1234';
+    const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
+        <rect width="400" height="600" fill="#ececf1"/>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9a9aa3" font-size="24" font-family="sans-serif">NO IMAGE</text>
+      </svg>
+    `);
+
+    const seedData = [
+      {
+        id: Date.now(),
+        title: '샘플 작품',
+        year: '2026',
+        role: '주연',
+        platform: '드라마',
+        poster: PLACEHOLDER,
+        desc: '여기에 작품 소개와 배역 관련 내용을 넣으면 됩니다.'
+      }
+    ];
+
+    const adminBtn = document.getElementById('adminBtn');
+    const adminTools = document.getElementById('adminTools');
+    const adminOffBtn = document.getElementById('adminOffBtn');
+    const openAddBtn = document.getElementById('openAddBtn');
+    const formCard = document.getElementById('formCard');
+    const formTitle = document.getElementById('formTitle');
+    const workTitle = document.getElementById('workTitle');
+    const workYear = document.getElementById('workYear');
+    const workRole = document.getElementById('workRole');
+    const workPlatform = document.getElementById('workPlatform');
+    const workPosterUrl = document.getElementById('workPosterUrl');
+    const workPosterFile = document.getElementById('workPosterFile');
+    const workDesc = document.getElementById('workDesc');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const gallery = document.getElementById('gallery');
+    const detailModal = document.getElementById('detailModal');
+    const detailImg = document.getElementById('detailImg');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailYear = document.getElementById('detailYear');
+    const detailRole = document.getElementById('detailRole');
+    const detailPlatform = document.getElementById('detailPlatform');
+    const detailDesc = document.getElementById('detailDesc');
+    const detailActions = document.getElementById('detailActions');
+    const pinModal = document.getElementById('pinModal');
+    const pinInput = document.getElementById('pinInput');
+    const pinConfirmBtn = document.getElementById('pinConfirmBtn');
+    const pinStatus = document.getElementById('pinStatus');
+
+    let items = loadItems();
+    let isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+    let editingId = null;
+
+    function loadItems() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return seedData;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) && parsed.length ? parsed : seedData;
+      } catch (e) {
+        return seedData;
+      }
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    function setAdminMode(value) {
+      isAdmin = value;
+      localStorage.setItem(ADMIN_SESSION_KEY, String(value));
+      adminTools.classList.toggle('active', value);
+      adminBtn.textContent = value ? '관리자 활성화됨' : '관리자';
+      if (!value) closeForm();
+      renderGallery();
+    }
+
+    function renderGallery() {
+      if (!items.length) {
+        gallery.innerHTML = '<div class="empty">등록된 작품이 없습니다.</div>';
+        return;
+      }
+
+      gallery.innerHTML = items.map(item => `
+        <div class="poster-card" data-id="${item.id}">
+          <div class="poster-img-wrap">
+            <img class="poster-img" src="${item.poster || PLACEHOLDER}" alt="${escapeHtml(item.title)}" onerror="this.src='${PLACEHOLDER}'" />
+          </div>
+          <div class="poster-info">
+            <div class="poster-title">${escapeHtml(item.title)}</div>
+            <div class="poster-meta">${escapeHtml(item.year || '')} · ${escapeHtml(item.platform || '')}</div>
+          </div>
+        </div>
+      `).join('');
+
+      gallery.querySelectorAll('.poster-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = Number(card.dataset.id);
+          const item = items.find(v => v.id === id);
+          if (item) openDetail(item);
+        });
+      });
+    }
+
+    function openDetail(item) {
+      detailImg.src = item.poster || PLACEHOLDER;
+      detailTitle.textContent = item.title || '';
+      detailYear.textContent = item.year || '-';
+      detailRole.textContent = item.role || '-';
+      detailPlatform.textContent = item.platform || '-';
+      detailDesc.textContent = item.desc || '';
+
+      if (isAdmin) {
+        detailActions.innerHTML = `
+          <button class="btn small dark" id="editWorkBtn">수정</button>
+          <button class="btn small" id="deleteWorkBtn">삭제</button>
+          <button class="btn small" id="closeDetailBtn">닫기</button>
+        `;
+        document.getElementById('editWorkBtn').addEventListener('click', () => {
+          closeDetail();
+          openEdit(item.id);
+        });
+        document.getElementById('deleteWorkBtn').addEventListener('click', () => {
+          if (confirm('이 작품을 삭제할까요?')) {
+            items = items.filter(v => v.id !== item.id);
+            saveItems();
+            closeDetail();
+            renderGallery();
+          }
+        });
+        document.getElementById('closeDetailBtn').addEventListener('click', closeDetail);
+      } else {
+        detailActions.innerHTML = `<button class="btn small" id="closeDetailBtn">닫기</button>`;
+        document.getElementById('closeDetailBtn').addEventListener('click', closeDetail);
+      }
+
+      detailModal.classList.add('active');
+    }
+
+    function closeDetail() {
+      detailModal.classList.remove('active');
+    }
+
+    function resetForm() {
+      editingId = null;
+      formTitle.textContent = '작품 추가';
+      workTitle.value = '';
+      workYear.value = '';
+      workRole.value = '';
+      workPlatform.value = '';
+      workPosterUrl.value = '';
+      workPosterFile.value = '';
+      workDesc.value = '';
+    }
+
+    function openAdd() {
+      resetForm();
+      formCard.classList.add('active');
+    }
+
+    function openEdit(id) {
+      const item = items.find(v => v.id === id);
+      if (!item) return;
+      editingId = id;
+      formTitle.textContent = '작품 수정';
+      workTitle.value = item.title || '';
+      workYear.value = item.year || '';
+      workRole.value = item.role || '';
+      workPlatform.value = item.platform || '';
+      workPosterUrl.value = item.poster && !item.poster.startsWith('data:image') ? item.poster : '';
+      workPosterFile.value = '';
+      workDesc.value = item.desc || '';
+      formCard.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeForm() {
+      formCard.classList.remove('active');
+      resetForm();
+    }
+
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function saveWork() {
+      const title = workTitle.value.trim();
+      if (!title) {
+        alert('작품명을 입력해줘.');
+        workTitle.focus();
+        return;
+      }
+
+      let poster = workPosterUrl.value.trim();
+      const file = workPosterFile.files[0];
+
+      if (file) {
+        try {
+          poster = await fileToDataURL(file);
+        } catch (e) {
+          alert('이미지 파일을 읽지 못했습니다.');
+          return;
+        }
+      }
+
+      const payload = {
+        id: editingId || Date.now(),
+        title,
+        year: workYear.value.trim(),
+        role: workRole.value.trim(),
+        platform: workPlatform.value.trim(),
+        poster: poster || PLACEHOLDER,
+        desc: workDesc.value.trim()
+      };
+
+      if (editingId) {
+        items = items.map(v => v.id === editingId ? payload : v);
+      } else {
+        items.unshift(payload);
+      }
+
+      try {
+        saveItems();
+      } catch (e) {
+        alert('저장에 실패했습니다. 이미지 파일이 너무 큰 경우일 수 있어. 더 작은 이미지로 다시 시도해줘.');
+        return;
+      }
+
+      renderGallery();
+      closeForm();
+    }
+
+    adminBtn.addEventListener('click', () => {
+      if (isAdmin) return;
+      pinInput.value = '';
+      pinStatus.textContent = '';
+      pinModal.classList.add('active');
+      setTimeout(() => pinInput.focus(), 50);
+    });
+
+    pinConfirmBtn.addEventListener('click', () => {
+      if (pinInput.value === ADMIN_PIN) {
+        pinModal.classList.remove('active');
+        setAdminMode(true);
+      } else {
+        pinStatus.textContent = 'PIN이 올바르지 않습니다.';
+      }
+    });
+
+    pinInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') pinConfirmBtn.click();
+    });
+
+    adminOffBtn.addEventListener('click', () => {
+      setAdminMode(false);
+    });
+
+    openAddBtn.addEventListener('click', openAdd);
+    cancelBtn.addEventListener('click', closeForm);
+    saveBtn.addEventListener('click', saveWork);
+
+    detailModal.addEventListener('click', (e) => {
+      if (e.target === detailModal) closeDetail();
+    });
+
+    pinModal.addEventListener('click', (e) => {
+      if (e.target === pinModal) pinModal.classList.remove('active');
+    });
+
+    setAdminMode(isAdmin);
+    renderGallery();
+  </script>
+</body>
+</html>
