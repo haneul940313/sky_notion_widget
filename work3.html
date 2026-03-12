@@ -63,13 +63,6 @@
       padding: 0 10px;
       font-size: 12px;
     }
-    .admin-tools {
-      display: none;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-    .admin-tools.active { display: flex; }
     .card {
       background: #fff;
       border: 1px solid #e8e8ed;
@@ -222,7 +215,7 @@
       top: 8px;
       left: 8px;
       z-index: 2;
-      display: none;
+      display: inline-flex;
       width: 24px;
       height: 24px;
       border: 0;
@@ -236,6 +229,13 @@
       line-height: 1;
       color: #111;
       padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease;
+    }
+    .poster-card:hover .delete-box {
+      opacity: 1;
+      pointer-events: auto;
     }
     .delete-box::after {
       content: '삭제';
@@ -255,7 +255,6 @@
       transition: opacity .15s ease;
     }
     .delete-box:hover::after { opacity: 1; }
-    .poster-card.admin .delete-box { display: inline-flex; }
     .empty {
       padding: 30px 14px;
       text-align: center;
@@ -266,7 +265,7 @@
       background: #fff;
     }
 
-    .modal, .pin-modal {
+    .modal {
       position: fixed;
       inset: 0;
       display: none;
@@ -276,7 +275,7 @@
       background: rgba(0,0,0,0.45);
       z-index: 50;
     }
-    .modal.active, .pin-modal.active { display: flex; }
+    .modal.active { display: flex; }
     .modal-box {
       width: min(760px, 100%);
       background: #fff;
@@ -398,44 +397,6 @@
     .work-nav-next { right: max(14px, calc(50% - 430px)); }
     .work-nav-next::after { right: 24px; }
 
-    .pin-box {
-      width: min(340px, 100%);
-      background: #fff;
-      border-radius: 16px;
-      padding: 18px;
-    }
-    .pin-box h3 {
-      margin: 0 0 8px;
-      font-size: 18px;
-    }
-    .pin-box p {
-      margin: 0 0 12px;
-      font-size: 13px;
-      color: #666;
-      line-height: 1.5;
-    }
-    .pin-row {
-      display: flex;
-      gap: 8px;
-    }
-    .pin-input {
-      flex: 1;
-      height: 40px;
-      padding: 0 12px;
-      border: 1px solid #d9d9de;
-      border-radius: 10px;
-      outline: none;
-      letter-spacing: 4px;
-      text-align: center;
-      font-size: 18px;
-    }
-    .status {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #d11a2a;
-      min-height: 16px;
-    }
-
     @media (max-width: 980px) {
       .poster-card { flex: 0 0 calc((100% - 20px) / 3); }
     }
@@ -460,13 +421,8 @@
         <p>노션 임베드 전용 간단 버전입니다.</p>
       </div>
       <div class="toolbar">
-        <button id="adminBtn" class="btn" type="button">관리자</button>
+        <button id="openAddTopBtn" class="btn dark" type="button">추가</button>
       </div>
-    </div>
-
-    <div id="adminTools" class="admin-tools">
-      <button id="openAddBtn" class="btn dark" type="button">작품 추가</button>
-      <button id="adminOffBtn" class="btn" type="button">관리자 모드 종료</button>
     </div>
 
     <div id="formCard" class="card form-card">
@@ -544,22 +500,9 @@
     <button id="workNextBtn" class="work-nav-btn work-nav-next" data-label="다음" type="button">›</button>
   </div>
 
-  <div id="pinModal" class="pin-modal">
-    <div class="pin-box">
-      <h3>관리자 PIN</h3>
-      <p>4자리 코드를 입력하시면 작품 추가·수정·삭제가 가능합니다.</p>
-      <div class="pin-row">
-        <input id="pinInput" class="pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="••••" />
-        <button id="pinConfirmBtn" class="btn dark" type="button">확인</button>
-      </div>
-      <div id="pinStatus" class="status"></div>
-    </div>
-  </div>
-
   <script>
     const WIDGET_ID = 'actor_widget_embed_001';
     const STORAGE_KEY = `actor_widget_embed_data_${WIDGET_ID}`;
-    const ADMIN_PIN = '0716';
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
         <rect width="400" height="600" fill="#ececf1"/>
@@ -580,19 +523,17 @@
 
     const $ = (id) => document.getElementById(id);
     const ui = {
-      adminBtn: $('adminBtn'), adminTools: $('adminTools'), adminOffBtn: $('adminOffBtn'), openAddBtn: $('openAddBtn'),
+      openAddTopBtn: $('openAddTopBtn'),
       formCard: $('formCard'), formTitle: $('formTitle'), workTitle: $('workTitle'), workYear: $('workYear'), workRole: $('workRole'),
       workPlatform: $('workPlatform'), workPosterFile: $('workPosterFile'), workExtraFiles: $('workExtraFiles'), workDesc: $('workDesc'),
       saveBtn: $('saveBtn'), cancelBtn: $('cancelBtn'), galleryTrack: $('galleryTrack'), galleryViewport: $('galleryViewport'),
       galleryPrevBtn: $('galleryPrevBtn'), galleryNextBtn: $('galleryNextBtn'), detailModal: $('detailModal'), detailImg: $('detailImg'),
       detailTitle: $('detailTitle'), detailYear: $('detailYear'), detailRole: $('detailRole'), detailPlatform: $('detailPlatform'),
       detailDesc: $('detailDesc'), detailActions: $('detailActions'), imagePrevBtn: $('imagePrevBtn'), imageNextBtn: $('imageNextBtn'),
-      imageCount: $('imageCount'), workPrevBtn: $('workPrevBtn'), workNextBtn: $('workNextBtn'), pinModal: $('pinModal'),
-      pinInput: $('pinInput'), pinConfirmBtn: $('pinConfirmBtn'), pinStatus: $('pinStatus'), formStatus: $('formStatus')
+      imageCount: $('imageCount'), workPrevBtn: $('workPrevBtn'), workNextBtn: $('workNextBtn'), formStatus: $('formStatus')
     };
 
     let items = [];
-    let isAdmin = false;
     let editingId = null;
     let currentDetailIndex = -1;
     let currentImageIndex = 0;
@@ -648,14 +589,6 @@
       return div.innerHTML;
     }
 
-    function setAdminMode(value) {
-      isAdmin = !!value;
-      ui.adminTools.classList.toggle('active', isAdmin);
-      ui.adminBtn.textContent = isAdmin ? '관리자 모드 사용 중' : '관리자';
-      if (!isAdmin) closeForm();
-      renderGallery();
-    }
-
     function maxGalleryIndex() {
       return Math.max(0, items.length - cardsPerView);
     }
@@ -689,7 +622,7 @@
       }
 
       ui.galleryTrack.innerHTML = items.map((item, index) => `
-        <div class="poster-card ${isAdmin ? 'admin' : ''}" data-index="${index}">
+        <div class="poster-card" data-index="${index}">
           <button class="delete-box" type="button" data-id="${item.id}">×</button>
           <div class="poster-img-wrap">
             <img class="poster-img" src="${item.poster || PLACEHOLDER}" alt="${(item.title || '').replace(/"/g, '&quot;')}" onerror="this.src='${PLACEHOLDER}'" />
@@ -768,20 +701,15 @@
       updateDetailImage(item);
       updateWorkNavButtons();
 
-      if (isAdmin) {
-        ui.detailActions.innerHTML = `
-          <button class="btn small dark" id="detailEditBtn" type="button">수정</button>
-          <button class="btn small" id="detailCloseBtn" type="button">닫기</button>
-        `;
-        $('detailEditBtn').addEventListener('click', () => {
-          closeDetail();
-          openEdit(item.id);
-        });
-        $('detailCloseBtn').addEventListener('click', closeDetail);
-      } else {
-        ui.detailActions.innerHTML = `<button class="btn small" id="detailCloseBtn" type="button">닫기</button>`;
-        $('detailCloseBtn').addEventListener('click', closeDetail);
-      }
+      ui.detailActions.innerHTML = `
+        <button class="btn small dark" id="detailEditBtn" type="button">수정</button>
+        <button class="btn small" id="detailCloseBtn" type="button">닫기</button>
+      `;
+      $('detailEditBtn').addEventListener('click', () => {
+        closeDetail();
+        openEdit(item.id);
+      });
+      $('detailCloseBtn').addEventListener('click', closeDetail);
 
       ui.detailModal.classList.add('active');
     }
@@ -947,29 +875,7 @@
     ui.galleryViewport.addEventListener('touchmove', (e) => pointerMove(e.touches[0].clientX), { passive: true });
     ui.galleryViewport.addEventListener('touchend', pointerUp);
 
-    ui.adminBtn.addEventListener('click', () => {
-      if (isAdmin) return;
-      ui.pinInput.value = '';
-      ui.pinStatus.textContent = '';
-      ui.pinModal.classList.add('active');
-      setTimeout(() => ui.pinInput.focus(), 50);
-    });
-
-    ui.pinConfirmBtn.addEventListener('click', () => {
-      if (ui.pinInput.value === ADMIN_PIN) {
-        ui.pinModal.classList.remove('active');
-        setAdminMode(true);
-      } else {
-        ui.pinStatus.textContent = 'PIN이 올바르지 않습니다.';
-      }
-    });
-
-    ui.pinInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') ui.pinConfirmBtn.click();
-    });
-
-    ui.adminOffBtn.addEventListener('click', () => setAdminMode(false));
-    ui.openAddBtn.addEventListener('click', openAdd);
+    ui.openAddTopBtn.addEventListener('click', openAdd);
     ui.cancelBtn.addEventListener('click', closeForm);
     ui.saveBtn.addEventListener('click', saveWork);
 
@@ -1003,10 +909,6 @@
 
     ui.detailModal.addEventListener('click', (e) => {
       if (e.target === ui.detailModal) closeDetail();
-    });
-
-    ui.pinModal.addEventListener('click', (e) => {
-      if (e.target === ui.pinModal) ui.pinModal.classList.remove('active');
     });
 
     window.addEventListener('resize', () => {
