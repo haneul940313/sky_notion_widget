@@ -60,7 +60,9 @@
       font-size: 11px;
       padding: 0 12px;
     }
-    .admin-btn { margin-right: 8px; }
+    .admin-btn {
+      margin-right: 8px;
+    }
     .admin-tools {
       display: none;
       gap: 8px;
@@ -192,7 +194,6 @@
       transition: transform .15s ease;
     }
     .poster-card:hover { transform: translateY(-2px); }
-    .poster-card.admin { cursor: pointer; }
     .poster-img-wrap {
       aspect-ratio: 2.2 / 3;
       background: #ececf1;
@@ -259,18 +260,8 @@
       pointer-events: none;
       transition: opacity .15s ease;
     }
-    .delete-box:hover::after {
-      opacity: 1;
-    }
-    .poster-card.admin .delete-box {
-      display: inline-flex;
-    }
-    .select-box input {
-      width: 14px;
-      height: 14px;
-      margin: 0;
-      cursor: pointer;
-    }
+    .delete-box:hover::after { opacity: 1; }
+    .poster-card.admin .delete-box { display: inline-flex; }
     .empty {
       padding: 30px 14px;
       text-align: center;
@@ -571,10 +562,11 @@
   </div>
 
   <script>
-    const DB_NAME = 'actorWorksWidgetSimpleDB';
+    const WIDGET_ID = 'actor_widget_page_001';
+    const DB_NAME = `actorWorksWidgetDB_${WIDGET_ID}`;
     const STORE_NAME = 'kv';
-    const ITEMS_KEY = 'items';
-    const ADMIN_KEY = 'admin';
+    const ITEMS_KEY = `items_${WIDGET_ID}`;
+    const ADMIN_KEY = `admin_${WIDGET_ID}`;
     const ADMIN_PIN = '0716';
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
@@ -596,7 +588,8 @@
 
     const $ = (id) => document.getElementById(id);
     const ui = {
-      adminBtn: $('adminBtn'), adminTools: $('adminTools'), adminOffBtn: $('adminOffBtn'), openAddBtn: $('openAddBtn'), formCard: $('formCard'), formTitle: $('formTitle'), workTitle: $('workTitle'), workYear: $('workYear'), workRole: $('workRole'),
+      adminBtn: $('adminBtn'), adminTools: $('adminTools'), adminOffBtn: $('adminOffBtn'), openAddBtn: $('openAddBtn'),
+      formCard: $('formCard'), formTitle: $('formTitle'), workTitle: $('workTitle'), workYear: $('workYear'), workRole: $('workRole'),
       workPlatform: $('workPlatform'), workPosterFile: $('workPosterFile'), workExtraFiles: $('workExtraFiles'), workDesc: $('workDesc'),
       saveBtn: $('saveBtn'), cancelBtn: $('cancelBtn'), galleryTrack: $('galleryTrack'), galleryViewport: $('galleryViewport'),
       galleryPrevBtn: $('galleryPrevBtn'), galleryNextBtn: $('galleryNextBtn'), detailModal: $('detailModal'), detailImg: $('detailImg'),
@@ -619,6 +612,7 @@
     let prevTranslate = 0;
     let isDragging = false;
     let moved = false;
+
     function setFormStatus(text = '', isError = false) {
       ui.formStatus.textContent = text;
       ui.formStatus.classList.toggle('error', !!isError);
@@ -635,7 +629,9 @@
         const request = indexedDB.open(DB_NAME, 1);
         request.onupgradeneeded = () => {
           const db = request.result;
-          if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
         };
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error || new Error('db open failed'));
@@ -695,9 +691,7 @@
       await saveAdminState();
       ui.adminTools.classList.toggle('active', isAdmin);
       ui.adminBtn.textContent = isAdmin ? '관리자 모드 사용 중' : '관리자';
-      if (!isAdmin) {
-        closeForm();
-      }
+      if (!isAdmin) closeForm();
       renderGallery();
     }
 
@@ -764,7 +758,7 @@
         });
       });
 
-ui.galleryTrack.querySelectorAll('.poster-card').forEach(card => {
+      ui.galleryTrack.querySelectorAll('.poster-card').forEach(card => {
         card.addEventListener('click', (e) => {
           if (moved) return;
           if (e.target.closest('.delete-box')) return;
