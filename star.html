@@ -17,8 +17,8 @@
     }
     .wrap {
       width: 100%;
-      max-width: 1600px;
-      margin: 0 auto;
+      max-width: none;
+      margin: 0;
       padding: 8px 0;
     }
     .topbar {
@@ -362,11 +362,32 @@
       padding: 0;
       text-shadow: 0 1px 8px rgba(0,0,0,0.65);
     }
+    .work-nav-btn::after {
+      content: attr(data-label);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(17,17,17,0.88);
+      color: #fff;
+      font-size: 11px;
+      line-height: 1;
+      padding: 6px 7px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease;
+      white-space: nowrap;
+    }
+    .work-nav-btn:hover::after {
+      opacity: 1;
+    }
     .work-nav-btn.show {
       display: inline-flex;
     }
-    .work-nav-prev { left: max(8px, calc(50% - 408px)); }
-    .work-nav-next { right: max(8px, calc(50% - 408px)); }
+    .work-nav-prev { left: max(4px, calc(50% - 398px)); }
+    .work-nav-prev::after { left: 24px; }
+    .work-nav-next { right: max(4px, calc(50% - 398px)); }
+    .work-nav-next::after { right: 24px; }
 
     .pin-box {
       width: min(340px, 100%);
@@ -433,8 +454,12 @@
         width: 24px;
         height: 36px;
       }
-      .work-nav-prev { left: 6px; }
-      .work-nav-next { right: 6px; }
+      .work-nav-prev { left: 2px; }
+      .work-nav-next { right: 2px; }
+      .work-nav-prev::after,
+      .work-nav-next::after {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -442,7 +467,7 @@
   <div class="wrap">
     <div class="topbar">
       <div class="title-box">
-        <h1>배우 작품활동</h1>
+        <h1>배우님 작품활동</h1>
         <p>포스터를 누르면 작품 상세 정보가 열립니다.</p>
       </div>
       <button id="adminBtn" class="btn">관리자</button>
@@ -503,7 +528,7 @@
   </div>
 
   <div id="detailModal" class="modal">
-    <button id="workPrevBtn" class="work-nav-btn work-nav-prev">‹</button>
+    <button id="workPrevBtn" class="work-nav-btn work-nav-prev" data-label="이전">‹</button>
     <div class="modal-box">
       <div class="modal-inner">
         <div class="modal-poster">
@@ -524,7 +549,7 @@
         </div>
       </div>
     </div>
-    <button id="workNextBtn" class="work-nav-btn work-nav-next">›</button>
+    <button id="workNextBtn" class="work-nav-btn work-nav-next" data-label="다음">›</button>
   </div>
 
   <div id="pinModal" class="pin-modal">
@@ -823,6 +848,7 @@
     function closeForm() {
       formCard.classList.remove('active');
       resetForm();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function fileToDataURL(file) {
@@ -899,6 +925,7 @@
 
       renderGallery();
       closeForm();
+      alert('등록했습니다.');
     }
 
     function pointerDown(x) {
