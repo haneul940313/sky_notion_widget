@@ -179,6 +179,7 @@
     }
     .gallery-track.dragging { transition: none; }
     .poster-card {
+      position: relative;
       flex: 0 0 calc((100% - 50px) / 6);
       min-width: 0;
       background: #fff;
@@ -203,6 +204,29 @@
       pointer-events: none;
     }
     .poster-info { padding: 8px; }
+    .select-box {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 2;
+      display: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.94);
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+    }
+    .poster-card.admin .select-box {
+      display: inline-flex;
+    }
+    .select-box input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      cursor: pointer;
+    }
     .poster-title {
       font-size: 13px;
       font-weight: 700;
@@ -425,6 +449,7 @@
 
     <div id="adminTools" class="admin-tools">
       <button id="openAddBtn" class="btn dark" type="button">작품 추가</button>
+      <button id="deleteSelectedBtn" class="btn" type="button">작품 삭제</button>
       <button id="adminOffBtn" class="btn" type="button">관리자 모드 종료</button>
     </div>
 
@@ -541,7 +566,7 @@
 
     const $ = (id) => document.getElementById(id);
     const ui = {
-      adminBtn: $('adminBtn'), adminTools: $('adminTools'), adminOffBtn: $('adminOffBtn'), openAddBtn: $('openAddBtn'),
+      adminBtn: $('adminBtn'), adminTools: $('adminTools'), adminOffBtn: $('adminOffBtn'), openAddBtn: $('openAddBtn'), deleteSelectedBtn: $('deleteSelectedBtn'),
       formCard: $('formCard'), formTitle: $('formTitle'), workTitle: $('workTitle'), workYear: $('workYear'), workRole: $('workRole'),
       workPlatform: $('workPlatform'), workPosterFile: $('workPosterFile'), workExtraFiles: $('workExtraFiles'), workDesc: $('workDesc'),
       saveBtn: $('saveBtn'), cancelBtn: $('cancelBtn'), galleryTrack: $('galleryTrack'), galleryViewport: $('galleryViewport'),
@@ -565,6 +590,7 @@
     let prevTranslate = 0;
     let isDragging = false;
     let moved = false;
+    let selectedIds = new Set();
 
     function setFormStatus(text = '', isError = false) {
       ui.formStatus.textContent = text;
@@ -685,7 +711,10 @@
       }
 
       ui.galleryTrack.innerHTML = items.map((item, index) => `
-        <div class="poster-card" data-index="${index}">
+        <div class="poster-card ${isAdmin ? 'admin' : ''}" data-index="${index}">
+          <label class="select-box">
+            <input type="checkbox" class="work-check" data-id="${item.id}" ${selectedIds.has(item.id) ? 'checked' : ''} />
+          </label>
           <div class="poster-img-wrap">
             <img class="poster-img" src="${item.poster || PLACEHOLDER}" alt="${(item.title || '').replace(/"/g, '&quot;')}" onerror="this.src='${PLACEHOLDER}'" />
           </div>
@@ -696,9 +725,19 @@
         </div>
       `).join('');
 
+      ui.galleryTrack.querySelectorAll('.work-check').forEach(check => {
+        check.addEventListener('click', (e) => e.stopPropagation());
+        check.addEventListener('change', () => {
+          const id = Number(check.dataset.id);
+          if (check.checked) selectedIds.add(id);
+          else selectedIds.delete(id);
+        });
+      });
+
       ui.galleryTrack.querySelectorAll('.poster-card').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
           if (moved) return;
+          if (e.target.closest('.select-box')) return;
           const index = Number(card.dataset.index);
           if (!Number.isNaN(index)) openDetailByIndex(index);
         });
@@ -743,29 +782,11 @@
       if (isAdmin) {
         ui.detailActions.innerHTML = `
           <button class="btn small dark" id="detailEditBtn" type="button">수정</button>
-          <button class="btn small" id="detailDeleteBtn" type="button">삭제</button>
           <button class="btn small" id="detailCloseBtn" type="button">닫기</button>
         `;
         $('detailEditBtn').addEventListener('click', () => {
           closeDetail();
           openEdit(item.id);
-        });
-        $('detailDeleteBtn').addEventListener('click', async () => {
-          const ok = window.confirm('이 작품을 삭제하시겠습니까?');
-          if (!ok) return;
-          const deleteId = item.id;
-          const beforeItems = [...items];
-          items = items.filter(v => v.id !== deleteId);
-          closeDetail();
-          renderGallery();
-          try {
-            await saveItemsState();
-            setFormStatus('삭제되었습니다.', false);
-          } catch (e) {
-            items = beforeItems;
-            renderGallery();
-            setFormStatus('삭제하지 못했습니다. 다시 시도해 주세요.', true);
-          }
         });
         $('detailCloseBtn').addEventListener('click', closeDetail);
       } else {
@@ -970,7 +991,28 @@
       if (e.key === 'Enter') ui.pinConfirmBtn.click();
     });
 
-    ui.adminOffBtn.addEventListener('click', async () => { await setAdminMode(false); });
+    ui.adminOffBtn.addEventListener('click', async () => { 
+      selectedIds.clear();
+      await setAdminMode(false); 
+    });
+
+    ui.deleteSelectedBtn.addEventListener('click', async () => {
+      if (!selectedIds.size) {
+        setFormStatus('삭제할 작품을 먼저 선택해 주세요.', true);
+        return;
+      }
+      const ok = window.confirm('선택한 작품을 삭제하시겠습니까?');
+      if (!ok) return;
+      try {
+        items = items.filter(item => !selectedIds.has(item.id));
+        selectedIds.clear();
+        await saveItemsState();
+        renderGallery();
+        setFormStatus('선택한 작품을 삭제했습니다.');
+      } catch (e) {
+        setFormStatus('삭제하지 못했습니다. 다시 시도해 주세요.', true);
+      }
+    });
     ui.openAddBtn.addEventListener('click', openAdd);
     ui.cancelBtn.addEventListener('click', closeForm);
     ui.saveBtn.addEventListener('click', saveWork);
