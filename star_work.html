@@ -991,6 +991,18 @@
 
     el.deleteCancelBtn.addEventListener('click', closeDeleteModal);
 
+    el.poster.addEventListener('change', () => {
+      if (el.poster.files[0] && el.poster.files[0].size <= 1024 * 1024) {
+        setEditorStatus('');
+      }
+    });
+
+    el.extras.addEventListener('change', () => {
+      if (el.extras.files.length && Array.from(el.extras.files).every(file => file.size <= 1024 * 1024)) {
+        setEditorStatus('');
+      }
+    });
+
     el.saveBtn.addEventListener('click', async () => {
       const title = el.title.value.trim();
       if (!title) {
@@ -1006,7 +1018,8 @@
         if (el.poster.files[0]) {
           const file = el.poster.files[0];
           if (file.size > 1024 * 1024) {
-            setEditorStatus('대표 포스터는 1MB 이하 이미지를 권장합니다.', true);
+            el.poster.value = '';
+            setEditorStatus('대표 포스터는 1MB 이하 이미지를 다시 선택해 주세요.', true);
             return;
           }
           poster = await fileToDataURL(file);
@@ -1015,7 +1028,8 @@
         if (el.extras.files.length) {
           const tooLarge = Array.from(el.extras.files).some(file => file.size > 1024 * 1024);
           if (tooLarge) {
-            setEditorStatus('추가 이미지는 각 1MB 이하 이미지를 권장합니다.', true);
+            el.extras.value = '';
+            setEditorStatus('추가 이미지는 각 1MB 이하 이미지를 다시 선택해 주세요.', true);
             return;
           }
           extras = await filesToDataURLs(el.extras.files, 2);
