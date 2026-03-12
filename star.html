@@ -9,14 +9,17 @@
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background: #f6f6f7;
       color: #111;
+      background: #fff;
+    }
+    button, input, textarea {
+      font: inherit;
     }
     .wrap {
       width: 100%;
-      max-width: 1400px;
+      max-width: 1600px;
       margin: 0 auto;
-      padding: 10px 2px;
+      padding: 8px 0;
     }
     .topbar {
       display: flex;
@@ -24,9 +27,6 @@
       align-items: flex-start;
       gap: 12px;
       margin-bottom: 14px;
-    }
-    .title-box {
-      padding-left: 0;
     }
     .title-box h1 {
       margin: 0;
@@ -39,9 +39,6 @@
       font-size: 13px;
       color: #666;
       text-align: left;
-    }
-    button, input, textarea {
-      font: inherit;
     }
     .btn {
       height: 38px;
@@ -65,51 +62,6 @@
       font-size: 11px;
       padding: 0 12px;
     }
-    .image-nav-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 34px;
-      height: 34px;
-      border: 0;
-      border-radius: 999px;
-      background: rgba(17,17,17,0.72);
-      color: #fff;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      z-index: 2;
-      cursor: pointer;
-    }
-    .image-nav-btn.show {
-      display: inline-flex;
-    }
-    .image-nav-prev { left: 10px; }
-    .image-nav-next { right: 10px; }
-    .work-nav-btn {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 44px;
-      height: 44px;
-      border: 0;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.94);
-      color: #111;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.16);
-      z-index: 60;
-      cursor: pointer;
-    }
-    .work-nav-btn.show {
-      display: inline-flex;
-    }
-    .work-nav-prev { left: 16px; }
-    .work-nav-next { right: 16px; }
     .admin-tools {
       display: none;
       gap: 8px;
@@ -183,12 +135,61 @@
       gap: 8px;
       margin-top: 4px;
     }
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+
+    .gallery-section {
+      position: relative;
+      width: 100%;
+    }
+    .gallery-nav {
+      position: absolute;
+      top: 38%;
+      transform: translateY(-50%);
+      z-index: 3;
+      width: 28px;
+      height: 48px;
+      border: 0;
+      background: rgba(255,255,255,0.96);
+      color: #111;
+      font-size: 22px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+    .gallery-nav.show {
+      display: inline-flex;
+    }
+    .gallery-prev {
+      left: 0;
+      border-radius: 0 10px 10px 0;
+    }
+    .gallery-next {
+      right: 0;
+      border-radius: 10px 0 0 10px;
+    }
+    .gallery-viewport {
+      overflow: hidden;
+      width: 100%;
+      cursor: grab;
+      touch-action: pan-y;
+    }
+    .gallery-viewport.dragging {
+      cursor: grabbing;
+    }
+    .gallery-track {
+      display: flex;
       gap: 10px;
+      will-change: transform;
+      transition: transform .28s ease;
+      user-select: none;
+    }
+    .gallery-track.dragging {
+      transition: none;
     }
     .poster-card {
+      flex: 0 0 calc((100% - 40px) / 5);
+      min-width: 0;
       background: #fff;
       border: 1px solid #e8e8ed;
       border-radius: 16px;
@@ -210,12 +211,13 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      pointer-events: none;
     }
     .poster-info {
-      padding: 10px;
+      padding: 8px;
     }
     .poster-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       line-height: 1.35;
       margin-bottom: 4px;
@@ -224,7 +226,7 @@
       text-overflow: ellipsis;
     }
     .poster-meta {
-      font-size: 12px;
+      font-size: 11px;
       color: #666;
       white-space: nowrap;
       overflow: hidden;
@@ -235,10 +237,11 @@
       text-align: center;
       font-size: 13px;
       color: #777;
-      background: #fff;
       border: 1px dashed #d9d9de;
       border-radius: 16px;
+      background: #fff;
     }
+
     .modal,
     .pin-modal {
       position: fixed;
@@ -277,6 +280,29 @@
       object-fit: cover;
       display: block;
     }
+    .image-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 0;
+      background: transparent;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      z-index: 2;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.55);
+    }
+    .image-nav-btn.show {
+      display: inline-flex;
+    }
+    .image-nav-prev { left: 10px; }
+    .image-nav-next { right: 10px; }
     .image-count {
       position: absolute;
       right: 10px;
@@ -318,6 +344,30 @@
       gap: 8px;
       margin-top: 16px;
     }
+    .work-nav-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 0;
+      background: transparent;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      z-index: 60;
+      cursor: pointer;
+      width: 28px;
+      height: 44px;
+      padding: 0;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.65);
+    }
+    .work-nav-btn.show {
+      display: inline-flex;
+    }
+    .work-nav-prev { left: max(8px, calc(50% - 408px)); }
+    .work-nav-next { right: max(8px, calc(50% - 408px)); }
+
     .pin-box {
       width: min(340px, 100%);
       background: #fff;
@@ -355,15 +405,21 @@
       color: #d11a2a;
       min-height: 16px;
     }
+
+    @media (max-width: 980px) {
+      .poster-card {
+        flex: 0 0 calc((100% - 20px) / 3);
+      }
+    }
     @media (max-width: 760px) {
       .wrap {
-        padding: 8px 2px;
-      }
-      .gallery {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 8px 0;
       }
       .grid {
         grid-template-columns: 1fr;
+      }
+      .poster-card {
+        flex: 0 0 calc((100% - 10px) / 2);
       }
       .modal-inner {
         grid-template-columns: 1fr;
@@ -373,15 +429,12 @@
         aspect-ratio: 2.2 / 3;
       }
       .work-nav-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 20px;
-        top: auto;
-        bottom: 18px;
-        transform: none;
+        font-size: 28px;
+        width: 24px;
+        height: 36px;
       }
-      .work-nav-prev { left: 10px; }
-      .work-nav-next { right: 10px; }
+      .work-nav-prev { left: 6px; }
+      .work-nav-next { right: 6px; }
     }
   </style>
 </head>
@@ -440,7 +493,13 @@
       </div>
     </div>
 
-    <div id="gallery" class="gallery"></div>
+    <div class="gallery-section">
+      <button id="galleryPrevBtn" class="gallery-nav gallery-prev">‹</button>
+      <div id="galleryViewport" class="gallery-viewport">
+        <div id="galleryTrack" class="gallery-track"></div>
+      </div>
+      <button id="galleryNextBtn" class="gallery-nav gallery-next">›</button>
+    </div>
   </div>
 
   <div id="detailModal" class="modal">
@@ -519,7 +578,12 @@
     const workDesc = document.getElementById('workDesc');
     const saveBtn = document.getElementById('saveBtn');
     const cancelBtn = document.getElementById('cancelBtn');
-    const gallery = document.getElementById('gallery');
+
+    const galleryTrack = document.getElementById('galleryTrack');
+    const galleryViewport = document.getElementById('galleryViewport');
+    const galleryPrevBtn = document.getElementById('galleryPrevBtn');
+    const galleryNextBtn = document.getElementById('galleryNextBtn');
+
     const detailModal = document.getElementById('detailModal');
     const detailImg = document.getElementById('detailImg');
     const detailTitle = document.getElementById('detailTitle');
@@ -533,6 +597,7 @@
     const imageCount = document.getElementById('imageCount');
     const workPrevBtn = document.getElementById('workPrevBtn');
     const workNextBtn = document.getElementById('workNextBtn');
+
     const pinModal = document.getElementById('pinModal');
     const pinInput = document.getElementById('pinInput');
     const pinConfirmBtn = document.getElementById('pinConfirmBtn');
@@ -543,6 +608,14 @@
     let editingId = null;
     let currentDetailIndex = -1;
     let currentImageIndex = 0;
+
+    let galleryIndex = 0;
+    let cardsPerView = getCardsPerView();
+    let startX = 0;
+    let currentTranslate = 0;
+    let prevTranslate = 0;
+    let isDragging = false;
+    let moved = false;
 
     function loadItems() {
       try {
@@ -562,11 +635,7 @@
           ? item.images.filter(Boolean)
           : [basePoster];
         if (!images.length) images.push(basePoster);
-        return {
-          ...item,
-          poster: basePoster,
-          images
-        };
+        return { ...item, poster: basePoster, images };
       });
     }
 
@@ -580,22 +649,45 @@
       return div.innerHTML;
     }
 
-    function setAdminMode(value) {
-      isAdmin = value;
-      localStorage.setItem(ADMIN_SESSION_KEY, String(value));
-      adminTools.classList.toggle('active', value);
-      adminBtn.textContent = value ? '관리자 모드 사용 중' : '관리자';
-      if (!value) closeForm();
-      renderGallery();
+    function getCardsPerView() {
+      if (window.innerWidth <= 760) return 2;
+      if (window.innerWidth <= 980) return 3;
+      return 5;
+    }
+
+    function maxGalleryIndex() {
+      return Math.max(0, items.length - cardsPerView);
+    }
+
+    function getCardStep() {
+      const firstCard = galleryTrack.querySelector('.poster-card');
+      if (!firstCard) return 0;
+      const style = window.getComputedStyle(galleryTrack);
+      const gap = parseFloat(style.columnGap || style.gap || 0) || 0;
+      return firstCard.getBoundingClientRect().width + gap;
+    }
+
+    function updateGalleryPosition(animate = true) {
+      const step = getCardStep();
+      const translate = -(galleryIndex * step);
+      galleryTrack.classList.toggle('dragging', !animate);
+      galleryTrack.style.transform = `translateX(${translate}px)`;
+      prevTranslate = translate;
+      currentTranslate = translate;
+      galleryPrevBtn.classList.toggle('show', items.length > cardsPerView && galleryIndex > 0);
+      galleryNextBtn.classList.toggle('show', items.length > cardsPerView && galleryIndex < maxGalleryIndex());
     }
 
     function renderGallery() {
+      cardsPerView = getCardsPerView();
       if (!items.length) {
-        gallery.innerHTML = '<div class="empty">등록된 작품이 없습니다.</div>';
+        galleryTrack.innerHTML = '<div class="empty">등록된 작품이 없습니다.</div>';
+        galleryPrevBtn.classList.remove('show');
+        galleryNextBtn.classList.remove('show');
         return;
       }
 
-      gallery.innerHTML = items.map((item, index) => `
+      galleryTrack.innerHTML = items.map((item, index) => `
         <div class="poster-card" data-index="${index}">
           <div class="poster-img-wrap">
             <img class="poster-img" src="${item.poster || PLACEHOLDER}" alt="${escapeHtml(item.title)}" onerror="this.src='${PLACEHOLDER}'" />
@@ -607,12 +699,28 @@
         </div>
       `).join('');
 
-      gallery.querySelectorAll('.poster-card').forEach(card => {
+      if (galleryIndex > maxGalleryIndex()) galleryIndex = maxGalleryIndex();
+      bindGalleryCards();
+      updateGalleryPosition(true);
+    }
+
+    function bindGalleryCards() {
+      galleryTrack.querySelectorAll('.poster-card').forEach(card => {
         card.addEventListener('click', () => {
+          if (moved) return;
           const index = Number(card.dataset.index);
           if (!Number.isNaN(index)) openDetailByIndex(index);
         });
       });
+    }
+
+    function setAdminMode(value) {
+      isAdmin = value;
+      localStorage.setItem(ADMIN_SESSION_KEY, String(value));
+      adminTools.classList.toggle('active', value);
+      adminBtn.textContent = value ? '관리자 모드 사용 중' : '관리자';
+      if (!value) closeForm();
+      renderGallery();
     }
 
     function updateDetailImage(item) {
@@ -729,9 +837,7 @@
     async function filesToDataURLs(fileList, limit) {
       const files = Array.from(fileList || []).slice(0, limit);
       const results = [];
-      for (const file of files) {
-        results.push(await fileToDataURL(file));
-      }
+      for (const file of files) results.push(await fileToDataURL(file));
       return results;
     }
 
@@ -745,17 +851,12 @@
 
       const existingItem = editingId ? items.find(v => v.id === editingId) : null;
       let poster = existingItem?.poster || PLACEHOLDER;
-      let images = Array.isArray(existingItem?.images) && existingItem.images.length
-        ? [...existingItem.images]
-        : [poster];
-
+      let images = Array.isArray(existingItem?.images) && existingItem.images.length ? [...existingItem.images] : [poster];
       const posterFile = workPosterFile.files[0];
       const extraFiles = workExtraFiles.files;
 
       try {
-        if (posterFile) {
-          poster = await fileToDataURL(posterFile);
-        }
+        if (posterFile) poster = await fileToDataURL(posterFile);
         if (extraFiles && extraFiles.length) {
           const extraImages = await filesToDataURLs(extraFiles, 3);
           images = [poster, ...extraImages];
@@ -800,6 +901,57 @@
       closeForm();
     }
 
+    function pointerDown(x) {
+      isDragging = true;
+      moved = false;
+      startX = x;
+      galleryViewport.classList.add('dragging');
+      galleryTrack.classList.add('dragging');
+    }
+
+    function pointerMove(x) {
+      if (!isDragging) return;
+      const currentPosition = x;
+      const diff = currentPosition - startX;
+      if (Math.abs(diff) > 6) moved = true;
+      currentTranslate = prevTranslate + diff;
+      galleryTrack.style.transform = `translateX(${currentTranslate}px)`;
+    }
+
+    function pointerUp() {
+      if (!isDragging) return;
+      isDragging = false;
+      galleryViewport.classList.remove('dragging');
+      galleryTrack.classList.remove('dragging');
+      const movedBy = currentTranslate - prevTranslate;
+      if (movedBy < -50 && galleryIndex < maxGalleryIndex()) galleryIndex += 1;
+      if (movedBy > 50 && galleryIndex > 0) galleryIndex -= 1;
+      updateGalleryPosition(true);
+      setTimeout(() => { moved = false; }, 0);
+    }
+
+    galleryPrevBtn.addEventListener('click', () => {
+      if (galleryIndex > 0) {
+        galleryIndex -= 1;
+        updateGalleryPosition(true);
+      }
+    });
+
+    galleryNextBtn.addEventListener('click', () => {
+      if (galleryIndex < maxGalleryIndex()) {
+        galleryIndex += 1;
+        updateGalleryPosition(true);
+      }
+    });
+
+    galleryViewport.addEventListener('mousedown', (e) => pointerDown(e.clientX));
+    galleryViewport.addEventListener('mousemove', (e) => pointerMove(e.clientX));
+    galleryViewport.addEventListener('mouseup', pointerUp);
+    galleryViewport.addEventListener('mouseleave', pointerUp);
+    galleryViewport.addEventListener('touchstart', (e) => pointerDown(e.touches[0].clientX), { passive: true });
+    galleryViewport.addEventListener('touchmove', (e) => pointerMove(e.touches[0].clientX), { passive: true });
+    galleryViewport.addEventListener('touchend', pointerUp);
+
     adminBtn.addEventListener('click', () => {
       if (isAdmin) return;
       pinInput.value = '';
@@ -821,10 +973,7 @@
       if (e.key === 'Enter') pinConfirmBtn.click();
     });
 
-    adminOffBtn.addEventListener('click', () => {
-      setAdminMode(false);
-    });
-
+    adminOffBtn.addEventListener('click', () => setAdminMode(false));
     openAddBtn.addEventListener('click', openAdd);
     cancelBtn.addEventListener('click', closeForm);
     saveBtn.addEventListener('click', saveWork);
@@ -863,6 +1012,12 @@
 
     pinModal.addEventListener('click', (e) => {
       if (e.target === pinModal) pinModal.classList.remove('active');
+    });
+
+    window.addEventListener('resize', () => {
+      cardsPerView = getCardsPerView();
+      if (galleryIndex > maxGalleryIndex()) galleryIndex = maxGalleryIndex();
+      updateGalleryPosition(true);
     });
 
     setAdminMode(isAdmin);
