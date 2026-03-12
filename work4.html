@@ -194,14 +194,42 @@
       pointer-events: none;
     }
     .poster-info { padding: 8px; }
+    .poster-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
     .poster-title {
       font-size: 13px;
       font-weight: 700;
       line-height: 1.35;
-      margin-bottom: 4px;
+      min-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin: 0;
+      flex: 1;
+    }
+    .name-delete-btn {
+      border: 0;
+      background: transparent;
+      font-size: 14px;
+      line-height: 1;
+      color: #666;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      padding: 2px 0;
+      flex-shrink: 0;
+    }
+    .poster-card:hover .name-delete-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .name-delete-btn:hover {
+      color: #111;
     }
     .poster-meta {
       font-size: 11px;
@@ -582,16 +610,37 @@
             <img class="poster-img" src="${item.poster || PLACEHOLDER}" alt="${(item.title || '').replace(/"/g, '&quot;')}" onerror="this.src='${PLACEHOLDER}'" />
           </div>
           <div class="poster-info">
-            <div class="poster-title">${escapeHtml(item.title)}</div>
+            <div class="poster-head">
+              <div class="poster-title">${escapeHtml(item.title)}</div>
+              <button class="name-delete-btn" type="button" data-id="${item.id}">삭제</button>
+            </div>
             <div class="poster-meta">${escapeHtml(item.year || '')} · ${escapeHtml(item.platform || '')}</div>
           </div>
         </div>
       `).join('');
 
-            ui.galleryTrack.querySelectorAll('.poster-card').forEach(card => {
+            ui.galleryTrack.querySelectorAll('.name-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = Number(btn.dataset.id);
+          const ok = window.confirm('이 작품을 삭제하시겠습니까?');
+          if (!ok) return;
+          items = items.filter(item => item.id !== id);
+          try {
+            saveState();
+            closeDetail();
+            renderGallery();
+            setFormStatus('작품을 삭제했습니다.');
+          } catch (error) {
+            setFormStatus('삭제하지 못했습니다. 다시 시도해 주세요.', true);
+          }
+        });
+      });
+
+      ui.galleryTrack.querySelectorAll('.poster-card').forEach(card => {
         card.addEventListener('click', (e) => {
           if (moved) return;
-          if (e.target.closest('.delete-box')) return;
+          if (e.target.closest('.name-delete-btn')) return;
           const index = Number(card.dataset.index);
           if (!Number.isNaN(index)) openDetailByIndex(index);
         });
