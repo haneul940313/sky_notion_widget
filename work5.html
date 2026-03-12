@@ -219,14 +219,10 @@
       line-height: 1;
       color: #666;
       cursor: pointer;
-      opacity: 0;
-      pointer-events: none;
-      padding: 2px 0;
-      flex-shrink: 0;
-    }
-    .poster-card:hover .name-delete-btn {
       opacity: 1;
       pointer-events: auto;
+      padding: 2px 0;
+      flex-shrink: 0;
     }
     .name-delete-btn:hover {
       color: #111;
@@ -866,11 +862,17 @@
       }
     });
 
-    ui.galleryViewport.addEventListener('mousedown', (e) => pointerDown(e.clientX));
+    ui.galleryViewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) return;
+      pointerDown(e.clientX);
+    });
     ui.galleryViewport.addEventListener('mousemove', (e) => pointerMove(e.clientX));
     ui.galleryViewport.addEventListener('mouseup', pointerUp);
     ui.galleryViewport.addEventListener('mouseleave', pointerUp);
-    ui.galleryViewport.addEventListener('touchstart', (e) => pointerDown(e.touches[0].clientX), { passive: true });
+    ui.galleryViewport.addEventListener('touchstart', (e) => {
+      if (e.target.closest('button')) return;
+      pointerDown(e.touches[0].clientX);
+    }, { passive: true });
     ui.galleryViewport.addEventListener('touchmove', (e) => pointerMove(e.touches[0].clientX), { passive: true });
     ui.galleryViewport.addEventListener('touchend', pointerUp);
 
