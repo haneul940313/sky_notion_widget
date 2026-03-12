@@ -107,7 +107,7 @@
       border-radius: 14px;
       overflow: hidden;
       background: #fff;
-      cursor: pointer;
+      cursor: default;
       transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
     }
     .item:hover {
@@ -153,6 +153,12 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       min-height: 54px;
+      margin-bottom: 10px;
+    }
+    .item-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
     }
     .empty {
       border: 1px dashed #d9d9de;
@@ -206,6 +212,8 @@
     <div class="actions">
       <button id="saveBtn" class="btn dark" type="button">저장</button>
       <button id="deleteBtn" class="btn danger" type="button">삭제</button>
+      <button id="confirmDeleteBtn" class="btn danger" type="button" style="display:none;">정말 삭제</button>
+      <button id="cancelDeleteBtn" class="btn" type="button" style="display:none;">삭제 취소</button>
       <button id="cancelBtn" class="btn" type="button">닫기</button>
     </div>
     <div id="status" class="status"></div>
@@ -250,6 +258,8 @@
       desc: document.getElementById('desc'),
       saveBtn: document.getElementById('saveBtn'),
       deleteBtn: document.getElementById('deleteBtn'),
+      confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+      cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
       cancelBtn: document.getElementById('cancelBtn'),
       status: document.getElementById('status'),
       list: document.getElementById('list')
@@ -294,6 +304,10 @@
       el.extras.value = '';
       el.desc.value = '';
       el.deleteBtn.style.display = 'none';
+    el.confirmDeleteBtn.style.display = 'none';
+    el.cancelDeleteBtn.style.display = 'none';
+      el.confirmDeleteBtn.style.display = 'none';
+      el.cancelDeleteBtn.style.display = 'none';
       setStatus('');
       render();
     }
@@ -333,6 +347,8 @@
       el.extras.value = '';
       el.desc.value = item.desc || '';
       el.deleteBtn.style.display = 'inline-flex';
+      el.confirmDeleteBtn.style.display = 'none';
+      el.cancelDeleteBtn.style.display = 'none';
       openForm();
       setStatus('기존 이미지는 새 파일을 올리지 않으면 유지됩니다.');
       render();
@@ -353,13 +369,17 @@
             <div class="title">${escapeHtml(item.title)}</div>
             <div class="meta">${escapeHtml(item.year || '')} · ${escapeHtml(item.role || '')} · ${escapeHtml(item.platform || '')}</div>
             <div class="desc">${escapeHtml(item.desc || '')}</div>
+            <div class="item-actions">
+              <button class="btn small dark edit-btn" type="button" data-id="${item.id}">수정</button>
+            </div>
           </div>
         </div>
       `).join('');
 
-      el.list.querySelectorAll('.item').forEach(card => {
-        card.addEventListener('click', () => {
-          const id = Number(card.dataset.id);
+      el.list.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = Number(btn.dataset.id);
           const item = items.find(v => v.id === id);
           if (!item) return;
           openEdit(item);
@@ -371,6 +391,8 @@
       editingId = null;
       activeId = null;
       el.deleteBtn.style.display = 'none';
+      el.confirmDeleteBtn.style.display = 'none';
+      el.cancelDeleteBtn.style.display = 'none';
       openForm();
       setStatus('새 작품을 추가합니다.');
       render();
@@ -382,12 +404,23 @@
 
     el.deleteBtn.addEventListener('click', () => {
       if (!editingId) return;
-      const ok = window.confirm('이 작품을 삭제하시겠습니까?');
-      if (!ok) return;
+      el.confirmDeleteBtn.style.display = 'inline-flex';
+      el.cancelDeleteBtn.style.display = 'inline-flex';
+      setStatus('정말 삭제하려면 "정말 삭제"를 눌러 주세요.');
+    });
+
+    el.confirmDeleteBtn.addEventListener('click', () => {
+      if (!editingId) return;
       items = items.filter(v => v.id !== editingId);
       saveItems();
       closeForm();
       render();
+    });
+
+    el.cancelDeleteBtn.addEventListener('click', () => {
+      el.confirmDeleteBtn.style.display = 'none';
+      el.cancelDeleteBtn.style.display = 'none';
+      setStatus('삭제를 취소했습니다.');
     });
 
     el.saveBtn.addEventListener('click', async () => {
