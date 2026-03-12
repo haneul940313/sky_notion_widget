@@ -65,9 +65,6 @@
     .status-bar {
       display: none;
     }
-    .status-bar.error {
-      color: #c62828;
-    }
 
     .list-viewport {
       width: 100%;
@@ -94,19 +91,13 @@
       cursor: pointer;
       transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, opacity .15s ease;
     }
-    .item:hover {
-      transform: translateY(-1px);
-    }
+    .item:hover { transform: translateY(-1px); }
     .item.active {
       border-color: #111;
       box-shadow: 0 0 0 2px rgba(17,17,17,0.08);
     }
-    .item.admin {
-      cursor: grab;
-    }
-    .item.dragging {
-      opacity: 0.45;
-    }
+    .item.admin { cursor: grab; }
+    .item.dragging { opacity: 0.45; }
     .item.drag-over {
       border-color: #111;
       box-shadow: 0 0 0 2px rgba(17,17,17,0.14);
@@ -143,12 +134,8 @@
       cursor: pointer;
       line-height: 1;
     }
-    .item.admin .thumb-delete-btn {
-      display: inline-flex;
-    }
-    .body {
-      padding: 10px;
-    }
+    .item.admin .thumb-delete-btn { display: inline-flex; }
+    .body { padding: 10px; }
     .title {
       font-size: 14px;
       font-weight: 700;
@@ -162,9 +149,7 @@
       color: #666;
       margin-bottom: 10px;
     }
-    .desc {
-      display: none;
-    }
+    .desc { display: none; }
     .empty {
       width: 100%;
       border: 1px dashed #d9d9de;
@@ -184,9 +169,7 @@
       background: rgba(0,0,0,0.45);
       z-index: 50;
     }
-    .modal.active {
-      display: flex;
-    }
+    .modal.active { display: flex; }
     .modal-box {
       width: min(760px, 100%);
       background: #fff;
@@ -243,9 +226,7 @@
       z-index: 2;
     }
     .image-count.show { display: inline-flex; }
-    .modal-content {
-      padding: 18px;
-    }
+    .modal-content { padding: 18px; }
     .modal-content h2 {
       margin: 0 0 8px;
       font-size: 24px;
@@ -322,9 +303,7 @@
       font-size: 18px;
       font-weight: 700;
     }
-    .field {
-      margin-bottom: 10px;
-    }
+    .field { margin-bottom: 10px; }
     .field label {
       display: block;
       font-size: 12px;
@@ -339,14 +318,8 @@
       background: #fff;
       outline: none;
     }
-    .input {
-      height: 38px;
-      padding: 0 12px;
-    }
-    .textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
+    .input { height: 38px; padding: 0 12px; }
+    .textarea { min-height: 90px; resize: vertical; }
     .hint {
       margin-top: 5px;
       font-size: 11px;
@@ -365,31 +338,16 @@
       color: #666;
       min-height: 18px;
     }
-    .editor-status.error {
-      color: #c62828;
-    }
+    .editor-status.error { color: #c62828; }
 
     @media (max-width: 980px) {
-      .item {
-        flex-basis: calc((100% - 24px) / 3);
-      }
+      .item { flex-basis: calc((100% - 24px) / 3); }
     }
     @media (max-width: 760px) {
-      .item {
-        flex-basis: calc((100% - 12px) / 2);
-      }
-      .modal-inner {
-        grid-template-columns: 1fr;
-      }
-      .modal-poster {
-        min-height: auto;
-        aspect-ratio: 2 / 3;
-      }
-      .work-nav-btn {
-        font-size: 28px;
-        width: 24px;
-        height: 36px;
-      }
+      .item { flex-basis: calc((100% - 12px) / 2); }
+      .modal-inner { grid-template-columns: 1fr; }
+      .modal-poster { min-height: auto; aspect-ratio: 2 / 3; }
+      .work-nav-btn { font-size: 28px; width: 24px; height: 36px; }
       .work-nav-prev { left: 8px; }
       .work-nav-next { right: 8px; }
       .work-nav-prev::after,
@@ -532,7 +490,9 @@
 
   <script>
     const WIDGET_ID = 'actor_widget_embed_001';
-    const STORAGE_KEY = `actor_widget_embed_data_${WIDGET_ID}`;
+    const DB_NAME = `actor_widget_indexeddb_${WIDGET_ID}`;
+    const STORE_NAME = 'state';
+    const STATE_KEY = 'main';
     const ADMIN_KEY = `actor_widget_admin_${WIDGET_ID}`;
     const ADMIN_PIN_KEY = `actor_widget_admin_pin_${WIDGET_ID}`;
     const DEFAULT_ADMIN_PIN = '0716';
@@ -565,7 +525,6 @@
       addBtn: document.getElementById('addBtn'),
       pageStatus: document.getElementById('pageStatus'),
       list: document.getElementById('list'),
-
       detailModal: document.getElementById('detailModal'),
       detailImg: document.getElementById('detailImg'),
       detailTitle: document.getElementById('detailTitle'),
@@ -580,17 +539,14 @@
       detailCloseBtn: document.getElementById('detailCloseBtn'),
       workPrevBtn: document.getElementById('workPrevBtn'),
       workNextBtn: document.getElementById('workNextBtn'),
-
       pinModal: document.getElementById('pinModal'),
       pinInput: document.getElementById('pinInput'),
       pinConfirmBtn: document.getElementById('pinConfirmBtn'),
       pinCancelBtn: document.getElementById('pinCancelBtn'),
       pinStatus: document.getElementById('pinStatus'),
-
       deleteModal: document.getElementById('deleteModal'),
       deleteConfirmBtn: document.getElementById('deleteConfirmBtn'),
       deleteCancelBtn: document.getElementById('deleteCancelBtn'),
-
       changePinModal: document.getElementById('changePinModal'),
       currentPinInput: document.getElementById('currentPinInput'),
       newPinInput: document.getElementById('newPinInput'),
@@ -598,7 +554,6 @@
       changePinConfirmBtn: document.getElementById('changePinConfirmBtn'),
       changePinCancelBtn: document.getElementById('changePinCancelBtn'),
       changePinStatus: document.getElementById('changePinStatus'),
-
       editorModal: document.getElementById('editorModal'),
       editorTitle: document.getElementById('editorTitle'),
       title: document.getElementById('title'),
@@ -613,6 +568,7 @@
       editorStatus: document.getElementById('editorStatus')
     };
 
+    let db = null;
     let items = [];
     let editingId = null;
     let activeId = null;
@@ -627,27 +583,59 @@
       el.pageStatus.textContent = text;
       el.pageStatus.classList.toggle('error', !!isError);
     }
-
     function setEditorStatus(text = '', isError = false) {
       el.editorStatus.textContent = text;
       el.editorStatus.classList.toggle('error', !!isError);
     }
-
     function setPinStatus(text = '', isError = false) {
       el.pinStatus.textContent = text;
       el.pinStatus.classList.toggle('error', !!isError);
     }
-
     function setChangePinStatus(text = '', isError = false) {
       el.changePinStatus.textContent = text;
       el.changePinStatus.classList.toggle('error', !!isError);
     }
 
-    function loadItems() {
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            database.createObjectStore(STORE_NAME, { keyPath: 'key' });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function dbGetState() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(STATE_KEY);
+        request.onsuccess = () => resolve(request.result ? request.result.value : null);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function dbSaveState() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({ key: STATE_KEY, value: items });
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    }
+
+    async function loadItems() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) : null;
-        items = Array.isArray(parsed) && parsed.length ? parsed : seedData;
+        db = await openDatabase();
+        const saved = await dbGetState();
+        items = Array.isArray(saved) && saved.length ? saved : seedData;
       } catch (e) {
         items = seedData;
       }
@@ -655,44 +643,36 @@
       adminPin = localStorage.getItem(ADMIN_PIN_KEY) || DEFAULT_ADMIN_PIN;
     }
 
-    function saveItems() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    async function saveItems() {
+      await dbSaveState();
     }
 
     function saveAdminMode() {
       localStorage.setItem(ADMIN_KEY, isAdmin ? 'true' : 'false');
     }
-
     function saveAdminPin() {
       localStorage.setItem(ADMIN_PIN_KEY, adminPin);
     }
 
-    function closeDetail() {
-      el.detailModal.classList.remove('active');
-    }
-
+    function closeDetail() { el.detailModal.classList.remove('active'); }
     function openPinModal() {
       el.pinInput.value = '';
       setPinStatus('');
       el.pinModal.classList.add('active');
     }
-
     function closePinModal() {
       el.pinModal.classList.remove('active');
       el.pinInput.value = '';
       setPinStatus('');
     }
-
     function openDeleteModal(id) {
       pendingDeleteId = id;
       el.deleteModal.classList.add('active');
     }
-
     function closeDeleteModal() {
       pendingDeleteId = null;
       el.deleteModal.classList.remove('active');
     }
-
     function openChangePinModal() {
       el.currentPinInput.value = '';
       el.newPinInput.value = '';
@@ -700,7 +680,6 @@
       setChangePinStatus('');
       el.changePinModal.classList.add('active');
     }
-
     function closeChangePinModal() {
       el.changePinModal.classList.remove('active');
       el.currentPinInput.value = '';
@@ -708,11 +687,11 @@
       el.newPinConfirmInput.value = '';
       setChangePinStatus('');
     }
-
-    function openEditor() {
-      el.editorModal.classList.add('active');
+    function openEditor() { el.editorModal.classList.add('active'); }
+    function clearFileInputs() {
+      el.poster.value = '';
+      el.extras.value = '';
     }
-
     function resetEditorFields() {
       editingId = null;
       activeId = null;
@@ -726,21 +705,11 @@
       el.editorTitle.textContent = '작품 추가';
       setEditorStatus('');
     }
-
     function closeEditor() {
       el.editorModal.classList.remove('active');
       resetEditorFields();
       clearFileInputs();
       render();
-    }
-
-    function fileToDataURL(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
     }
 
     function loadImageFromFile(file) {
@@ -758,19 +727,12 @@
     }
 
     async function compressImageFile(file, options = {}) {
-      const {
-        maxWidth = 900,
-        maxHeight = 1350,
-        quality = 0.78,
-        mimeType = 'image/jpeg'
-      } = options;
-
+      const { maxWidth = 900, maxHeight = 1350, quality = 0.78, mimeType = 'image/jpeg' } = options;
       const img = await loadImageFromFile(file);
       let { width, height } = img;
       const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
       width = Math.max(1, Math.round(width * ratio));
       height = Math.max(1, Math.round(height * ratio));
-
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
@@ -778,12 +740,8 @@
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
-
       let output = canvas.toDataURL(mimeType, quality);
-
-      if (output.length > 900000) {
-        output = canvas.toDataURL(mimeType, 0.65);
-      }
+      if (output.length > 900000) output = canvas.toDataURL(mimeType, 0.65);
       if (output.length > 700000) {
         const secondCanvas = document.createElement('canvas');
         secondCanvas.width = Math.max(1, Math.round(width * 0.85));
@@ -794,7 +752,6 @@
         secondCtx.drawImage(canvas, 0, 0, secondCanvas.width, secondCanvas.height);
         output = secondCanvas.toDataURL(mimeType, 0.6);
       }
-
       return output;
     }
 
@@ -802,18 +759,9 @@
       const files = Array.from(fileList || []).slice(0, limit);
       const results = [];
       for (const file of files) {
-        results.push(await compressImageFile(file, {
-          maxWidth: 900,
-          maxHeight: 1350,
-          quality: 0.72
-        }));
+        results.push(await compressImageFile(file, { maxWidth: 900, maxHeight: 1350, quality: 0.72 }));
       }
       return results;
-    }
-
-    function clearFileInputs() {
-      el.poster.value = '';
-      el.extras.value = '';
     }
 
     function escapeHtml(text) {
@@ -821,11 +769,9 @@
       div.textContent = text || '';
       return div.innerHTML;
     }
-
     function getImageList(item) {
       return [item.poster || PLACEHOLDER, ...(item.extras || [])].filter(Boolean);
     }
-
     function updateDetailImage(item) {
       const images = getImageList(item);
       currentImageIndex = Math.max(0, Math.min(currentImageIndex, images.length - 1));
@@ -835,7 +781,6 @@
       el.imageCount.classList.toggle('show', images.length > 1);
       el.imageCount.textContent = images.length > 1 ? `${currentImageIndex + 1} / ${images.length}` : '';
     }
-
     function updateWorkNavButtons() {
       const show = items.length > 1;
       el.workPrevBtn.classList.toggle('show', show);
@@ -885,8 +830,6 @@
       if (fromIndex < 0 || toIndex < 0) return;
       const [moved] = items.splice(fromIndex, 1);
       items.splice(toIndex, 0, moved);
-      saveItems();
-      render();
     }
 
     function attachDragHandlers() {
@@ -915,11 +858,12 @@
         card.addEventListener('dragleave', () => {
           card.classList.remove('drag-over');
         });
-        card.addEventListener('drop', (e) => {
+        card.addEventListener('drop', async (e) => {
           e.preventDefault();
           const toId = Number(card.dataset.id);
           card.classList.remove('drag-over');
           reorderItems(dragId, toId);
+          try { await saveItems(); render(); } catch { setEditorStatus('순서를 저장하지 못했습니다.', true); }
         });
       });
     }
@@ -966,11 +910,6 @@
       el.adminBtn.textContent = isAdmin ? '관리자 모드 종료' : '관리자 모드';
       el.addBtn.style.display = isAdmin ? 'inline-flex' : 'none';
       el.changePinBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-      setPageStatus(
-        isAdmin
-          ? '관리자 모드가 켜져 있습니다. 삭제 가능, 드래그로 순서 변경 가능.'
-          : '카드를 누르면 상세가 열립니다. 추가/수정/삭제는 관리자 모드에서만 가능합니다.'
-      );
     }
 
     el.adminBtn.addEventListener('click', () => {
@@ -1025,7 +964,6 @@
       adminPin = next;
       saveAdminPin();
       closeChangePinModal();
-      setPageStatus('관리자 비밀번호를 변경했습니다.');
     });
 
     el.changePinCancelBtn.addEventListener('click', closeChangePinModal);
@@ -1041,28 +979,27 @@
 
     el.cancelBtn.addEventListener('click', closeEditor);
 
-    el.deleteConfirmBtn.addEventListener('click', () => {
+    el.deleteConfirmBtn.addEventListener('click', async () => {
       if (!isAdmin || !pendingDeleteId) return;
       items = items.filter(v => v.id !== pendingDeleteId);
-      saveItems();
-      if (editingId === pendingDeleteId) closeEditor();
-      if (activeId === pendingDeleteId) {
-        closeDetail();
-        activeId = null;
+      try {
+        await saveItems();
+        if (editingId === pendingDeleteId) closeEditor();
+        if (activeId === pendingDeleteId) {
+          closeDetail();
+          activeId = null;
+        }
+        closeDeleteModal();
+        render();
+      } catch (e) {
+        setEditorStatus('삭제하지 못했습니다.', true);
       }
-      closeDeleteModal();
-      render();
     });
 
     el.deleteCancelBtn.addEventListener('click', closeDeleteModal);
 
-    el.poster.addEventListener('change', () => {
-      setEditorStatus('');
-    });
-
-    el.extras.addEventListener('change', () => {
-      setEditorStatus('');
-    });
+    el.poster.addEventListener('change', () => setEditorStatus(''));
+    el.extras.addEventListener('change', () => setEditorStatus(''));
 
     el.saveBtn.addEventListener('click', async () => {
       const title = el.title.value.trim();
@@ -1106,16 +1043,12 @@
           items.unshift(payload);
         }
 
-        saveItems();
+        await saveItems();
         clearFileInputs();
         closeEditor();
         render();
       } catch (e) {
-        if (e && (e.name === 'QuotaExceededError' || String(e).toLowerCase().includes('quota'))) {
-          setEditorStatus('저장 용량이 부족합니다. 이미지 크기를 더 줄이거나 기존 작품 이미지를 정리해 주세요.', true);
-        } else {
-          setEditorStatus('저장하지 못했습니다. 이미지 크기를 줄여 다시 선택한 뒤 저장해 주세요.', true);
-        }
+        setEditorStatus('저장하지 못했습니다. 다시 시도해 주세요.', true);
       }
     });
 
@@ -1160,25 +1093,23 @@
     el.detailModal.addEventListener('click', (e) => {
       if (e.target === el.detailModal) closeDetail();
     });
-
     el.pinModal.addEventListener('click', (e) => {
       if (e.target === el.pinModal) closePinModal();
     });
-
     el.deleteModal.addEventListener('click', (e) => {
       if (e.target === el.deleteModal) closeDeleteModal();
     });
-
     el.changePinModal.addEventListener('click', (e) => {
       if (e.target === el.changePinModal) closeChangePinModal();
     });
-
     el.editorModal.addEventListener('click', (e) => {
       if (e.target === el.editorModal) closeEditor();
     });
 
-    loadItems();
-    render();
+    (async function init() {
+      await loadItems();
+      render();
+    })();
   </script>
 </body>
 </html>
