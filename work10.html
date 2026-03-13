@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>배우 작품활동 위젯</title>
+<style>
+/* 기존 스타일 유지 + 관리자 폼 스타일 추가 */
+* { box-sizing:border-box; }
+body { margin:0; padding:16px; font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; color:#111; background:#fff;}
+button,input,textarea { font:inherit; }
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;}
+h1{margin:0;font-size:22px;line-height:1.2;text-align:left;}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.btn{height:36px;padding:0 14px;border:1px solid #d9d9de;border-radius:10px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;vertical-align:middle;}
+.btn.dark{background:#111;border-color:#111;color:#fff;}
+.btn.danger{color:#b42318;border-color:#efc0c0;background:#fff;}
+.btn.small{height:32px;padding:0 10px;font-size:12px;}
+.status-bar{display:none;}
+.list-viewport{width:100%;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.list{display:flex;gap:12px;align-items:stretch;min-width:100%;}
+.item{position:relative;flex:0 0 calc((100% - 48px)/5);min-width:180px;border:1px solid #e8e8ed;border-radius:14px;overflow:hidden;background:#fff;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease,opacity .15s ease;}
+.item:hover{transform:translateY(-1px);}
+.item.active{border-color:#111;box-shadow:0 0 0 2px rgba(17,17,17,0.08);}
+.item.admin{cursor:grab;}
+.item.dragging{opacity:0.45;}
+.item.drag-over{border-color:#111;box-shadow:0 0 0 2px rgba(17,17,17,0.14);}
+.thumb{position:relative;aspect-ratio:2/3;background:#ececf1;overflow:hidden;}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
+.thumb-delete-btn{position:absolute;top:10px;right:10px;z-index:2;display:none;align-items:center;justify-content:center;min-width:52px;height:32px;padding:0 10px;border:0;border-radius:999px;background:rgba(17,17,17,0.88);color:#fff;font-size:12px;cursor:pointer;line-height:1;}
+.item.admin .thumb-delete-btn{display:inline-flex;}
+.body{padding:10px;}
+.title{font-size:14px;font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.meta{font-size:12px;color:#666;margin-bottom:10px;}
+.desc{display:none;}
+.empty{width:100%;border:1px dashed #d9d9de;border-radius:14px;padding:24px;text-align:center;color:#777;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);justify-content:center;align-items:center;z-index:1000;}
+.modal-box{background:#fff;border-radius:14px;padding:20px;max-width:600px;width:100%;max-height:90%;overflow-y:auto;}
+.modal-inner{display:flex;gap:16px;}
+.modal-poster img{width:120px;height:auto;object-fit:cover;border-radius:8px;}
+.modal-content h2{margin-top:0;}
+.admin-form{display:none;flex-direction:column;gap:10px;margin-top:16px;}
+.admin-form input, .admin-form textarea{width:100%;padding:6px 10px;border:1px solid #d9d9de;border-radius:6px;}
+.admin-form button{align-self:flex-start;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>배우 작품활동</h1>
+  <div class="top-actions">
+    <button id="adminBtn" class="btn" type="button">관리자 모드</button>
+  </div>
+</div>
+
+<div id="list" class="list-viewport"><div class="list" id="listInner"></div></div>
+
+<!-- 상세 모달 -->
+<div id="detailModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-inner">
+      <div class="modal-poster">
+        <img id="detailImg" src="" alt="포스터" />
+      </div>
+      <div class="modal-content">
+        <h2 id="detailTitle"></h2>
+        <div class="meta-list">
+          <div><strong>공개일</strong> <span id="detailYear"></span></div>
+          <div><strong>역할</strong> <span id="detailRole"></span></div>
+          <div><strong>플랫폼</strong> <span id="detailPlatform"></span></div>
+        </div>
+        <div id="detailDesc"></div>
+        <button id="detailCloseBtn" class="btn">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 관리자 폼 -->
+<div class="admin-form" id="adminForm">
+  <input type="text" id="adminTitle" placeholder="작품명">
+  <input type="text" id="adminYear" placeholder="공개일">
+  <input type="text" id="adminRole" placeholder="역할">
+  <input type="text" id="adminPlatform" placeholder="플랫폼">
+  <input type="text" id="adminPoster" placeholder="포스터 URL">
+  <textarea id="adminDesc" placeholder="상세설명"></textarea>
+  <button id="adminAddBtn" class="btn dark">추가</button>
+  <button id="adminUpdateBtn" class="btn dark">수정</button>
+  <button id="adminDeleteBtn" class="btn danger">삭제</button>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600"><rect width="400" height="600" fill="#ececf1"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9a9aa3" font-size="24" font-family="sans-serif">NO IMAGE</text></svg>`);
+
+const el = {
+  listInner: document.getElementById('listInner'),
+  detailModal: document.getElementById('detailModal'),
+  detailImg: document.getElementById('detailImg'),
+  detailTitle: document.getElementById('detailTitle'),
+  detailYear: document.getElementById('detailYear'),
+  detailRole: document.getElementById('detailRole'),
+  detailPlatform: document.getElementById('detailPlatform'),
+  detailDesc: document.getElementById('detailDesc'),
+  detailCloseBtn: document.getElementById('detailCloseBtn'),
+  adminBtn: document.getElementById('adminBtn'),
+  adminForm: document.getElementById('adminForm'),
+  adminTitle: document.getElementById('adminTitle'),
+  adminYear: document.getElementById('adminYear'),
+  adminRole: document.getElementById('adminRole'),
+  adminPlatform: document.getElementById('adminPlatform'),
+  adminPoster: document.getElementById('adminPoster'),
+  adminDesc: document.getElementById('adminDesc'),
+  adminAddBtn: document.getElementById('adminAddBtn'),
+  adminUpdateBtn: document.getElementById('adminUpdateBtn'),
+  adminDeleteBtn: document.getElementById('adminDeleteBtn'),
+};
+
+let items = [];
+let selectedIndex = null;
+
+// 데이터 불러오기
+async function loadItems() {
+  try {
+    const res = await fetch(API_URL);
+    items = await res.json();
+    render();
+  } catch(e) {
+    console.error(e);
+    el.listInner.innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';
+  }
+}
+
+function escapeHtml(text){const div=document.createElement('div');div.textContent=text||'';return div.innerHTML;}
+
+function render() {
+  if(!items.length){el.listInner.innerHTML='<div class="empty">등록된 작품이 없습니다.</div>'; return;}
+  el.listInner.innerHTML = items.map((item,index)=>`
+    <div class="item" data-index="${index}">
+      <div class="thumb"><img src="${item.poster||PLACEHOLDER}" alt="${escapeHtml(item.title)}"></div>
+      <div class="body">
+        <div class="title">${escapeHtml(item.title)}</div>
+        <div class="meta">${escapeHtml(item.year||'')} · ${escapeHtml(item.role||'')} · ${escapeHtml(item.platform||'')}</div>
+      </div>
+    </div>`).join('');
+
+  // 클릭 이벤트
+  el.listInner.querySelectorAll('.item').forEach(card=>{
+    card.addEventListener('click',()=>{
+      selectedIndex = Number(card.dataset.index);
+      const item = items[selectedIndex];
+      el.detailImg.src = item.poster||PLACEHOLDER;
+      el.detailTitle.textContent = item.title||'';
+      el.detailYear.textContent = item.year||'-';
+      el.detailRole.textContent = item.role||'-';
+      el.detailPlatform.textContent = item.platform||'-';
+      el.detailDesc.textContent = item.desc||'';
+      el.detailModal.style.display='flex';
+
+      // 관리자 폼에 값 세팅
+      el.adminTitle.value = item.title||'';
+      el.adminYear.value = item.year||'';
+      el.adminRole.value = item.role||'';
+      el.adminPlatform.value = item.platform||'';
+      el.adminPoster.value = item.poster||'';
+      el.adminDesc.value = item.desc||'';
+    });
+  });
+}
+
+el.detailCloseBtn.addEventListener('click',()=>el.detailModal.style.display='none');
+
+el.adminBtn.addEventListener('click',()=>{
+  el.adminForm.style.display = el.adminForm.style.display==='flex'?'none':'flex';
+});
+
+// CRUD
+async function postData(payload){
+  const res = await fetch(API_URL,{method:'POST',body:JSON.stringify(payload)});
+  return res.json();
+}
+
+async function putData(payload){
+  const res = await fetch(API_URL,{method:'PUT',body:JSON.stringify(payload)});
+  return res.json();
+}
+
+async function deleteData(payload){
+  const res = await fetch(API_URL,{method:'DELETE',body:JSON.stringify(payload)});
+  return res.json();
+}
+
+el.adminAddBtn.addEventListener('click', async ()=>{
+  const payload = {
+    title: el.adminTitle.value,
+    year: el.adminYear.value,
+    role: el.adminRole.value,
+    platform: el.adminPlatform.value,
+    poster: el.adminPoster.value,
+    desc: el.adminDesc.value
+  };
+  await postData(payload);
+  await loadItems();
+});
+
+el.adminUpdateBtn.addEventListener('click', async ()=>{
+  if(selectedIndex===null) return alert('작품을 선택하세요.');
+  const payload = {index:selectedIndex,
+    title: el.adminTitle.value,
+    year: el.adminYear.value,
+    role: el.adminRole.value,
+    platform: el.adminPlatform.value,
+    poster: el.adminPoster.value,
+    desc: el.adminDesc.value
+  };
+  await putData(payload);
+  await loadItems();
+});
+
+el.adminDeleteBtn.addEventListener('click', async ()=>{
+  if(selectedIndex===null) return alert('작품을 선택하세요.');
+  if(!confirm('정말 삭제하시겠습니까?')) return;
+  await deleteData({index:selectedIndex});
+  selectedIndex = null;
+  await loadItems();
+});
+
+// 초기로드
+loadItems();
+</script>
+</body>
+</html>
