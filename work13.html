@@ -57,14 +57,7 @@
       border-color: #efc0c0;
       background: #fff;
     }
-    .btn.small {
-      height: 32px;
-      padding: 0 10px;
-      font-size: 12px;
-    }
-    .status-bar {
-      display: none;
-    }
+    .status-bar { display: none; }
 
     .list-viewport {
       width: 100%;
@@ -489,7 +482,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0d-8sd9I8DWjcRmd7BKbvy2ORjCvm7EY-7e9FdcrbICURLNpqHSL-5nf_cA1Lk71m/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziBoMVJxul47Wc3jcUu5FlYWgBY2w1Lb9Ju-OMZlCe7EyQ0FHPV8TuVMNXXit1yWE/exec';
     const DEFAULT_ADMIN_PIN = '0000';
 
     const PLACEHOLDER =
@@ -973,32 +966,32 @@
       openPinModal();
     });
 
-  el.pinConfirmBtn.addEventListener('click', async () => {
-  const pin = el.pinInput.value.trim();
+    el.pinConfirmBtn.addEventListener('click', async () => {
+      const pin = el.pinInput.value.trim();
 
-  if (!/^\d{4}$/.test(pin)) {
-    setPinStatus('비밀번호 4자리를 입력해 주세요.', true);
-    return;
-  }
+      if (!/^\d{4}$/.test(pin)) {
+        setPinStatus('비밀번호 4자리를 입력해 주세요.', true);
+        return;
+      }
 
-  try {
-    const result = await apiPost({
-      action: 'verifyPin',
-      pin
+      try {
+        const result = await apiPost({
+          action: 'verifyPin',
+          pin
+        });
+
+        if (result.data && result.data.valid) {
+          isAdmin = true;
+          adminPin = pin;
+          closePinModal();
+          render();
+        } else {
+          setPinStatus('비밀번호가 올바르지 않습니다.', true);
+        }
+      } catch (error) {
+        setPinStatus('비밀번호를 확인하지 못했습니다.', true);
+      }
     });
-
-    if (result.data && result.data.valid) {
-      isAdmin = true;
-      adminPin = pin;
-      closePinModal();
-      render();
-    } else {
-      setPinStatus('비밀번호가 올바르지 않습니다.', true);
-    }
-  } catch (error) {
-    setPinStatus('비밀번호를 확인하지 못했습니다.', true);
-  }
-});
 
     el.pinCancelBtn.addEventListener('click', closePinModal);
     el.pinInput.addEventListener('keydown', (e) => {
@@ -1015,8 +1008,8 @@
       const next = el.newPinInput.value.trim();
       const confirmNext = el.newPinConfirmInput.value.trim();
 
-      if (current !== adminPin) {
-        setChangePinStatus('현재 비밀번호가 올바르지 않습니다.', true);
+      if (!/^\d{4}$/.test(current)) {
+        setChangePinStatus('현재 비밀번호 4자리를 입력해 주세요.', true);
         return;
       }
       if (!/^\d{4}$/.test(next)) {
