@@ -116,7 +116,7 @@
     .layout {
       display: grid;
       grid-template-columns: 288px minmax(0, 1fr);
-      gap: 20px;
+      gap: 32px;
       align-items: start;
     }
 
@@ -147,47 +147,6 @@
       object-position: center center;
       display: block;
     }
-
-    .photo-nav {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 36px;
-      height: 36px;
-      border: 0;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.88);
-      color: #1f1f1f;
-      font-size: 20px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-    }
-
-    .photo-nav.show { display: inline-flex; }
-    .photo-prev { left: 12px; }
-    .photo-next { right: 12px; }
-
-    .photo-count {
-      position: absolute;
-      right: 14px;
-      bottom: 14px;
-      min-width: 48px;
-      height: 28px;
-      padding: 0 10px;
-      border-radius: 999px;
-      background: rgba(20,20,20,0.55);
-      color: #fff;
-      font-size: 12px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(4px);
-    }
-
-    .photo-count.show { display: inline-flex; }
 
     .content {
       min-width: 0;
@@ -358,8 +317,8 @@
         max-width: 288px;
         height: 400px;
       }
+
       .photo-card { min-height: 400px; }
-      .content { padding-top: 0; }
       .summary { font-size: 15px; }
       .label { font-size: 18px; }
       .value { font-size: 16px; }
@@ -385,10 +344,7 @@
     <div class="layout">
       <div class="photo-wrap">
         <div class="photo-card">
-          <button id="photoPrevBtn" class="photo-nav photo-prev" type="button">‹</button>
           <img id="photoImage" src="" alt="프로필 이미지" />
-          <button id="photoNextBtn" class="photo-nav photo-next" type="button">›</button>
-          <div id="photoCount" class="photo-count"></div>
         </div>
       </div>
 
@@ -465,15 +421,9 @@
       </div>
 
       <div class="field">
-        <label for="mainPhotoInput">대표 이미지</label>
+        <label for="mainPhotoInput">프로필 이미지</label>
         <input id="mainPhotoInput" class="input" type="file" accept="image/*" />
-        <div class="hint">대표 이미지는 자동 압축 후 저장됩니다.</div>
-      </div>
-
-      <div class="field">
-        <label for="extraPhotoInput">추가 이미지</label>
-        <input id="extraPhotoInput" class="input" type="file" accept="image/*" multiple />
-        <div class="hint">추가 이미지는 최대 2장까지 가능합니다. 대표 이미지 포함 총 3장까지 슬라이드로 볼 수 있습니다.</div>
+        <div class="hint">이미지는 자동 압축 후 저장됩니다.</div>
       </div>
 
       <div class="editor-actions">
@@ -509,15 +459,12 @@
       blood: 'A형',
       mbti: 'ENFP',
       instagram: '',
-      photos: [PLACEHOLDER]
+      photo: PLACEHOLDER
     };
 
     const el = {
       editBtn: document.getElementById('editBtn'),
       photoImage: document.getElementById('photoImage'),
-      photoPrevBtn: document.getElementById('photoPrevBtn'),
-      photoNextBtn: document.getElementById('photoNextBtn'),
-      photoCount: document.getElementById('photoCount'),
       nameText: document.getElementById('nameText'),
       summaryText: document.getElementById('summaryText'),
       birthText: document.getElementById('birthText'),
@@ -534,7 +481,6 @@
       mbtiInput: document.getElementById('mbtiInput'),
       instagramInput: document.getElementById('instagramInput'),
       mainPhotoInput: document.getElementById('mainPhotoInput'),
-      extraPhotoInput: document.getElementById('extraPhotoInput'),
       saveBtn: document.getElementById('saveBtn'),
       closeBtn: document.getElementById('closeBtn'),
       statusText: document.getElementById('statusText')
@@ -542,7 +488,6 @@
 
     let db = null;
     let state = { ...defaultState };
-    let currentPhotoIndex = 0;
 
     function setStatus(text = '', isError = false) {
       el.statusText.textContent = text;
@@ -600,9 +545,9 @@
 
     async function compressImageFile(file, options = {}) {
       const {
-        maxWidth = 1000,
-        maxHeight = 1400,
-        quality = 0.8,
+        maxWidth = 1100,
+        maxHeight = 1500,
+        quality = 0.78,
         mimeType = 'image/jpeg'
       } = options;
 
@@ -635,30 +580,8 @@
       return output;
     }
 
-    async function compressFiles(fileList, limit) {
-      const files = Array.from(fileList || []).slice(0, limit);
-      const results = [];
-      for (const file of files) {
-        results.push(await compressImageFile(file, {
-          maxWidth: 900,
-          maxHeight: 1300,
-          quality: 0.74
-        }));
-      }
-      return results;
-    }
-
-    function renderPhoto() {
-      const photos = Array.isArray(state.photos) && state.photos.length ? state.photos : [PLACEHOLDER];
-      currentPhotoIndex = Math.max(0, Math.min(currentPhotoIndex, photos.length - 1));
-      el.photoImage.src = photos[currentPhotoIndex];
-      el.photoPrevBtn.classList.toggle('show', photos.length > 1);
-      el.photoNextBtn.classList.toggle('show', photos.length > 1);
-      el.photoCount.classList.toggle('show', photos.length > 1);
-      el.photoCount.textContent = photos.length > 1 ? `${currentPhotoIndex + 1} / ${photos.length}` : '';
-    }
-
     function render() {
+      el.photoImage.src = state.photo || PLACEHOLDER;
       el.nameText.textContent = state.name || '';
       el.summaryText.textContent = state.summary || '';
       el.birthText.textContent = state.birth || '';
@@ -673,8 +596,6 @@
       } else {
         el.instagramText.textContent = '';
       }
-
-      renderPhoto();
     }
 
     function fillEditor() {
@@ -686,7 +607,6 @@
       el.mbtiInput.value = state.mbti || '';
       el.instagramInput.value = state.instagram || '';
       el.mainPhotoInput.value = '';
-      el.extraPhotoInput.value = '';
       setStatus('');
     }
 
@@ -695,6 +615,9 @@
         db = await openDatabase();
         const saved = await dbGetState();
         state = saved ? { ...defaultState, ...saved } : { ...defaultState };
+        if (!state.photo && Array.isArray(state.photos) && state.photos.length) {
+          state.photo = state.photos[0];
+        }
       } catch (e) {
         state = { ...defaultState };
       }
@@ -718,20 +641,7 @@
       }
     });
 
-    el.photoPrevBtn.addEventListener('click', () => {
-      const photos = Array.isArray(state.photos) && state.photos.length ? state.photos : [PLACEHOLDER];
-      currentPhotoIndex = (currentPhotoIndex - 1 + photos.length) % photos.length;
-      renderPhoto();
-    });
-
-    el.photoNextBtn.addEventListener('click', () => {
-      const photos = Array.isArray(state.photos) && state.photos.length ? state.photos : [PLACEHOLDER];
-      currentPhotoIndex = (currentPhotoIndex + 1) % photos.length;
-      renderPhoto();
-    });
-
     el.mainPhotoInput.addEventListener('change', () => setStatus(''));
-    el.extraPhotoInput.addEventListener('change', () => setStatus(''));
 
     el.saveBtn.addEventListener('click', async () => {
       const name = el.nameInput.value.trim();
@@ -749,26 +659,19 @@
           blood: el.bloodInput.value.trim(),
           mbti: el.mbtiInput.value.trim(),
           instagram: el.instagramInput.value.trim(),
-          photos: Array.isArray(state.photos) && state.photos.length ? [...state.photos] : [PLACEHOLDER]
+          photo: state.photo || PLACEHOLDER
         };
 
         if (el.mainPhotoInput.files[0]) {
-          const main = await compressImageFile(el.mainPhotoInput.files[0], {
+          nextState.photo = await compressImageFile(el.mainPhotoInput.files[0], {
             maxWidth: 1100,
             maxHeight: 1500,
             quality: 0.78
           });
-          nextState.photos[0] = main;
-        }
-
-        if (el.extraPhotoInput.files.length) {
-          const extras = await compressFiles(el.extraPhotoInput.files, 2);
-          nextState.photos = [nextState.photos[0] || PLACEHOLDER, ...extras];
         }
 
         state = nextState;
         await dbSaveState();
-        currentPhotoIndex = 0;
         render();
         el.editorModal.classList.remove('active');
         setStatus('');
