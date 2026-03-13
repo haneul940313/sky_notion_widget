@@ -402,17 +402,17 @@
 
       <div class="field">
         <label for="birthInput">생년월일</label>
-        <input id="birthInput" class="input" type="text" placeholder="예: 1994.08.14" />
+        <input id="birthInput" class="input" type="text" placeholder="예: 1992.07.16" />
       </div>
 
       <div class="field">
         <label for="educationInput">학력</label>
-        <textarea id="educationInput" class="textarea" placeholder="예: ○○대학교 연극영화과 졸업"></textarea>
+        <textarea id="educationInput" class="textarea" placeholder="예: 서울예대 연기과"></textarea>
       </div>
 
       <div class="field">
         <label for="bloodInput">혈액형</label>
-        <input id="bloodInput" class="input" type="text" placeholder="예: A형" />
+        <input id="bloodInput" class="input" type="text" placeholder="예: AB형" />
       </div>
 
       <div class="field">
@@ -422,7 +422,7 @@
 
       <div class="field">
         <label for="instagramInput">인스타그램 링크</label>
-        <input id="instagramInput" class="input" type="text" placeholder="예: https://instagram.com/username" />
+        <input id="instagramInput" class="input" type="text" placeholder="예: https://instagram.com/hs_1004_" />
       </div>
 
       <div class="field">
@@ -440,12 +440,24 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweMdsgWVogH__bF1JZR-4Hn_0VF19qoMmgCEewTHGr7M4md6Y-Lou8NVGBi1oMhopU/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztxPTSMtcHwTfSTqdPdAUOF8WArCcczRIey9Lj1wOFXduamr8JPxHWaPQxJYSIj6SU/exec';
     const PROFILE_ID = 'profile_001';
-    const PROFILE_CACHE_KEY = 'profile_widget_cache_v1';
-    const PROFILE_CACHE_MAX_AGE = 1000 * 60 * 10;
+    const PROFILE_CACHE_KEY = 'profile_widget_cache_v3';
 
-    const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    const defaultState = {
+      id: 'profile_001',
+      name: '박형석',
+      summary: `안녕하세요.
+여행과 연기를 사랑하는 #ACTRAVELLER 박형석입니다.`,
+      birth: '1992.07.16',
+      education: '서울예대 연기과',
+      blood: 'AB형',
+      mbti: 'ENFP',
+      instagram: 'https://instagram.com/hs_1004_',
+      photo: 'https://lh3.googleusercontent.com/d/1bESJ_eEcS_VuhAnoup5FmuoVbXJyEMOM'
+    };
+
+    const PLACEHOLDER = defaultState.photo || 'data:image/svg+xml;utf8,' + encodeURIComponent(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100">' +
       '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0%" stop-color="#d7e2df"/>' +
@@ -455,19 +467,6 @@
       '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="#6f7c7a" font-size="44" font-family="sans-serif">PROFILE IMAGE</text>' +
       '</svg>'
     );
-
-    const defaultState = {
-      id: PROFILE_ID,
-      name: '홍길동',
-      summary: `이름 아래 들어갈 설명을 적는 영역입니다.
-원하시는 소개 문구로 자유롭게 수정할 수 있습니다.`,
-      birth: '1994.08.14',
-      education: '예시 학력을 입력해 주세요.',
-      blood: 'A형',
-      mbti: 'ENFP',
-      instagram: '',
-      photo: PLACEHOLDER
-    };
 
     const el = {
       editBtn: document.getElementById('editBtn'),
@@ -511,24 +510,21 @@
 
     function normalizeProfileData(data) {
       return {
-        id: data?.id ? String(data.id).trim() : PROFILE_ID,
+        id: data?.id ? String(data.id).trim() : defaultState.id,
         name: data?.name ? String(data.name).trim() : defaultState.name,
         summary: data?.summary ? String(data.summary).trim() : defaultState.summary,
-        birth: data?.birth ? String(data.birth).trim() : '',
-        education: data?.education ? String(data.education).trim() : '',
-        blood: data?.blood ? String(data.blood).trim() : '',
-        mbti: data?.mbti ? String(data.mbti).trim() : '',
-        instagram: data?.instagram ? String(data.instagram).trim() : '',
-        photo: data?.photo ? String(data.photo).trim() : PLACEHOLDER
+        birth: data?.birth ? String(data.birth).trim() : defaultState.birth,
+        education: data?.education ? String(data.education).trim() : defaultState.education,
+        blood: data?.blood ? String(data.blood).trim() : defaultState.blood,
+        mbti: data?.mbti ? String(data.mbti).trim() : defaultState.mbti,
+        instagram: data?.instagram ? String(data.instagram).trim() : defaultState.instagram,
+        photo: data?.photo ? String(data.photo).trim() : defaultState.photo
       };
     }
 
     function saveProfileCache(data) {
       try {
-        localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({
-          savedAt: Date.now(),
-          data
-        }));
+        localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data));
       } catch (e) {}
     }
 
@@ -536,11 +532,7 @@
       try {
         const raw = localStorage.getItem(PROFILE_CACHE_KEY);
         if (!raw) return null;
-
-        const parsed = JSON.parse(raw);
-        if (!parsed || !parsed.data) return null;
-
-        return parsed.data;
+        return JSON.parse(raw);
       } catch (e) {
         return null;
       }
@@ -595,15 +587,19 @@
 
       const result = await response.json();
 
-      if (!result.success) {
-        throw new Error(result.message || '프로필 데이터를 불러오지 못했습니다.');
+      if (Array.isArray(result)) {
+        const found = result.find(item => String(item.id || '').trim() === PROFILE_ID) || result[0];
+        return normalizeProfileData(found || defaultState);
       }
 
-      if (!result.data) {
-        return { ...defaultState };
+      if (result && typeof result === 'object' && result.success !== undefined) {
+        if (!result.success) {
+          throw new Error(result.message || '프로필 데이터를 불러오지 못했습니다.');
+        }
+        return normalizeProfileData(result.data || defaultState);
       }
 
-      return normalizeProfileData(result.data);
+      return normalizeProfileData(result || defaultState);
     }
 
     function loadImageFromFile(file) {
@@ -685,11 +681,14 @@
 
       const result = await response.json();
 
-      if (!result.success) {
-        throw new Error(result.message || '프로필 저장에 실패했습니다.');
+      if (result && typeof result === 'object' && result.success !== undefined) {
+        if (!result.success) {
+          throw new Error(result.message || '프로필 저장에 실패했습니다.');
+        }
+        return normalizeProfileData(result.data || payload);
       }
 
-      return normalizeProfileData(result.data || payload);
+      return normalizeProfileData(result || payload);
     }
 
     async function init() {
@@ -705,7 +704,7 @@
 
       try {
         const latest = await fetchProfile();
-        state = normalizeProfileData(latest);
+        state = latest;
         render();
         saveProfileCache(state);
       } catch (error) {
