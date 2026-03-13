@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>프로필 위젯</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
-  </style>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+
   <style>
     * { box-sizing: border-box; }
 
@@ -83,8 +85,11 @@
     }
 
     .menu-panel .btn { width: 100%; }
+
     .menu-wrap:hover .menu-panel,
-    .menu-wrap:focus-within .menu-panel { display: block; }
+    .menu-wrap:focus-within .menu-panel {
+      display: block;
+    }
 
     .btn {
       height: 38px;
@@ -344,7 +349,7 @@
     <div class="layout">
       <div class="photo-wrap">
         <div class="photo-card">
-          <img id="photoImage" src="" alt="프로필 이미지" />
+          <img id="photoImage" src="" alt="프로필 이미지" decoding="async" fetchpriority="high" />
         </div>
       </div>
 
@@ -435,8 +440,10 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjuY2mhSBlNFTScGueQ48fg_--UI2ERfS20-YEqXqfrPknNR5Pr_bILdRkgwUz_Wmj/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweMdsgWVogH__bF1JZR-4Hn_0VF19qoMmgCEewTHGr7M4md6Y-Lou8NVGBi1oMhopU/exec';
     const PROFILE_ID = 'profile_001';
+    const PROFILE_CACHE_KEY = 'profile_widget_cache_v1';
+    const PROFILE_CACHE_MAX_AGE = 1000 * 60 * 10;
 
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100">' +
@@ -516,7 +523,35 @@
       };
     }
 
+    function saveProfileCache(data) {
+      try {
+        localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          data
+        }));
+      } catch (e) {}
+    }
+
+    function loadProfileCache() {
+      try {
+        const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+        if (!raw) return null;
+
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.data) return null;
+
+        return parsed.data;
+      } catch (e) {
+        return null;
+      }
+    }
+
     function render() {
+      el.photoImage.onerror = () => {
+        el.photoImage.onerror = null;
+        el.photoImage.src = PLACEHOLDER;
+      };
+
       el.photoImage.src = state.photo || PLACEHOLDER;
       el.nameText.textContent = state.name || '';
       el.summaryText.textContent = state.summary || '';
@@ -589,9 +624,9 @@
 
     async function compressImageFile(file, options = {}) {
       const {
-        maxWidth = 1100,
-        maxHeight = 1500,
-        quality = 0.78,
+        maxWidth = 900,
+        maxHeight = 1200,
+        quality = 0.72,
         mimeType = 'image/jpeg'
       } = options;
 
@@ -615,11 +650,11 @@
 
       let output = canvas.toDataURL(mimeType, quality);
 
-      if (output.length > 900000) {
-        output = canvas.toDataURL(mimeType, 0.68);
+      if (output.length > 650000) {
+        output = canvas.toDataURL(mimeType, 0.62);
       }
 
-      if (output.length > 700000) {
+      if (output.length > 500000) {
         const canvas2 = document.createElement('canvas');
         canvas2.width = Math.max(1, Math.round(width * 0.88));
         canvas2.height = Math.max(1, Math.round(height * 0.88));
@@ -629,7 +664,7 @@
         ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
         ctx2.drawImage(canvas, 0, 0, canvas2.width, canvas2.height);
 
-        output = canvas2.toDataURL(mimeType, 0.62);
+        output = canvas2.toDataURL(mimeType, 0.58);
       }
 
       return output;
@@ -658,15 +693,22 @@
     }
 
     async function init() {
-      try {
-        setStatus('불러오는 중...');
-        state = await fetchProfile();
+      const cached = loadProfileCache();
+
+      if (cached) {
+        state = normalizeProfileData(cached);
         render();
-        setStatus('');
-      } catch (error) {
+      } else {
         state = { ...defaultState };
         render();
-        setStatus('');
+      }
+
+      try {
+        const latest = await fetchProfile();
+        state = normalizeProfileData(latest);
+        render();
+        saveProfileCache(state);
+      } catch (error) {
         console.error(error);
       }
     }
@@ -718,13 +760,14 @@
 
         if (el.mainPhotoInput.files[0]) {
           nextState.photo = await compressImageFile(el.mainPhotoInput.files[0], {
-            maxWidth: 1100,
-            maxHeight: 1500,
-            quality: 0.78
+            maxWidth: 900,
+            maxHeight: 1200,
+            quality: 0.72
           });
         }
 
         state = await saveProfile(nextState);
+        saveProfileCache(state);
         render();
         el.editorModal.classList.remove('active');
         setStatus('');
