@@ -489,7 +489,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziBoMVJxul47Wc3jcUu5FlYWgBY2w1Lb9Ju-OMZlCe7EyQ0FHPV8TuVMNXXit1yWE/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0d-8sd9I8DWjcRmd7BKbvy2ORjCvm7EY-7e9FdcrbICURLNpqHSL-5nf_cA1Lk71m/exec';
     const DEFAULT_ADMIN_PIN = '0000';
 
     const PLACEHOLDER =
@@ -973,15 +973,32 @@
       openPinModal();
     });
 
-    el.pinConfirmBtn.addEventListener('click', () => {
-      if (el.pinInput.value === adminPin) {
-        isAdmin = true;
-        closePinModal();
-        render();
-      } else {
-        setPinStatus('비밀번호가 올바르지 않습니다.', true);
-      }
+  el.pinConfirmBtn.addEventListener('click', async () => {
+  const pin = el.pinInput.value.trim();
+
+  if (!/^\d{4}$/.test(pin)) {
+    setPinStatus('비밀번호 4자리를 입력해 주세요.', true);
+    return;
+  }
+
+  try {
+    const result = await apiPost({
+      action: 'verifyPin',
+      pin
     });
+
+    if (result.data && result.data.valid) {
+      isAdmin = true;
+      adminPin = pin;
+      closePinModal();
+      render();
+    } else {
+      setPinStatus('비밀번호가 올바르지 않습니다.', true);
+    }
+  } catch (error) {
+    setPinStatus('비밀번호를 확인하지 못했습니다.', true);
+  }
+});
 
     el.pinCancelBtn.addEventListener('click', closePinModal);
     el.pinInput.addEventListener('keydown', (e) => {
