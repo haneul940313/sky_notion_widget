@@ -396,7 +396,7 @@
       <h2 class="editor-title">관리자 모드</h2>
       <div class="field">
         <label for="pinInput">비밀번호</label>
-        <input id="pinInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="4자리 입력" />
+        <input id="pinInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="숫자 입력" />
       </div>
       <div class="editor-actions">
         <button id="pinConfirmBtn" class="btn dark" type="button">확인</button>
@@ -422,15 +422,15 @@
       <h2 class="editor-title">비밀번호 변경</h2>
       <div class="field">
         <label for="currentPinInput">현재 비밀번호</label>
-        <input id="currentPinInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="현재 4자리 입력" />
+        <input id="currentPinInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="현재 숫자 입력" />
       </div>
       <div class="field">
         <label for="newPinInput">새 비밀번호</label>
-        <input id="newPinInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="새 4자리 입력" />
+        <input id="newPinInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="새 숫자 입력" />
       </div>
       <div class="field">
         <label for="newPinConfirmInput">새 비밀번호 확인</label>
-        <input id="newPinConfirmInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="새 4자리 다시 입력" />
+        <input id="newPinConfirmInput" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="새 숫자 다시 입력" />
       </div>
       <div class="editor-actions">
         <button id="changePinConfirmBtn" class="btn dark" type="button">변경</button>
@@ -482,8 +482,8 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweMdsgWVogH__bF1JZR-4Hn_0VF19qoMmgCEewTHGr7M4md6Y-Lou8NVGBi1oMhopU/exec';
-    const DEFAULT_ADMIN_PIN = '0000';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziI6fUihhSvZBEqKLY4xRokYpGuRdwdv1oiUgijFC7Utm9LWaV7sFX7uwQ2ebDotMa/exec';
+    const DEFAULT_ADMIN_PIN = '716';
 
     const PLACEHOLDER =
       'data:image/svg+xml;utf8,' +
@@ -969,8 +969,8 @@
     el.pinConfirmBtn.addEventListener('click', async () => {
       const pin = el.pinInput.value.trim();
 
-      if (!/^\d{4}$/.test(pin)) {
-        setPinStatus('비밀번호 4자리를 입력해 주세요.', true);
+      if (!/^\d{1,4}$/.test(pin)) {
+        setPinStatus('숫자 비밀번호를 입력해 주세요.', true);
         return;
       }
 
@@ -1008,12 +1008,12 @@
       const next = el.newPinInput.value.trim();
       const confirmNext = el.newPinConfirmInput.value.trim();
 
-      if (!/^\d{4}$/.test(current)) {
-        setChangePinStatus('현재 비밀번호 4자리를 입력해 주세요.', true);
+      if (!/^\d{1,4}$/.test(current)) {
+        setChangePinStatus('현재 비밀번호를 입력해 주세요.', true);
         return;
       }
-      if (!/^\d{4}$/.test(next)) {
-        setChangePinStatus('새 비밀번호는 4자리 숫자로 입력해 주세요.', true);
+      if (!/^\d{1,4}$/.test(next)) {
+        setChangePinStatus('새 비밀번호는 숫자만 입력해 주세요.', true);
         return;
       }
       if (next !== confirmNext) {
