@@ -489,7 +489,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrQB4z5oFjvL49UrGwUpMLDMzmhx6WZqnN9biaf3HHgzA6vMRpEXyLoEqjAn_udgu6zK0-yv5w9K1MCCx97ObNzC9tVWn05Xd2Tz-bOa3y29qKHFu7NMBOxExdUIiEVaJl88WcUho51_f_0JF5JjorVfdFqBtP0f76S953o0DC4AZd6Y7DiRYa8m7cfHWc9WCNCOGd_0Fk44YfHcV26qWiZ3oRrk3a9sVOKfuQyJyh38fvTSudDwkaQwMgHX6kS5KUb0U_mCunFGBVIOMQQTXF4yH1LnYg&lib=ME0t5TmB2ahaf0mfXmkqwoBQWPgfVss6g';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziBoMVJxul47Wc3jcUu5FlYWgBY2w1Lb9Ju-OMZlCe7EyQ0FHPV8TuVMNXXit1yWE/exec';
     const DEFAULT_ADMIN_PIN = '0000';
 
     const PLACEHOLDER =
@@ -926,7 +926,7 @@
           <div class="item ${activeId === item.id ? 'active' : ''} ${isAdmin ? 'admin' : ''}" data-id="${item.id}">
             <div class="thumb">
               <button class="thumb-delete-btn" type="button" data-id="${item.id}">삭제</button>
-              <img src="${item.poster || PLACEHOLDER}" alt="${(item.title || '').replace(/"/g, '&quot;')}" />
+              <img loading="lazy" src="${item.poster || PLACEHOLDER}" alt="${(item.title || '').replace(/"/g, '&quot;')}" />
             </div>
             <div class="body">
               <div class="title">${escapeHtml(item.title)}</div>
@@ -1084,9 +1084,9 @@
 
         if (el.poster.files[0]) {
           poster = await compressImageFile(el.poster.files[0], {
-            maxWidth: 1000,
-            maxHeight: 1500,
-            quality: 0.76
+            maxWidth: 700,
+            maxHeight: 1050,
+            quality: 0.68
           });
         }
 
