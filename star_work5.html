@@ -15,6 +15,18 @@
     }
     button, input, textarea { font: inherit; }
 
+    button:focus,
+    button:focus-visible,
+    input:focus,
+    input:focus-visible,
+    textarea:focus,
+    textarea:focus-visible,
+    .item:focus,
+    .item:focus-visible {
+      outline: none;
+      box-shadow: none;
+    }
+
     .topbar {
       display: flex;
       justify-content: space-between;
@@ -62,6 +74,23 @@
       padding: 0 10px;
       font-size: 12px;
     }
+    .icon-btn {
+      width: 36px;
+      min-width: 36px;
+      height: 36px;
+      padding: 0;
+    }
+    .more-btn {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 2px;
+    }
+    .more-btn.active {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
     .status-bar {
       display: none;
     }
@@ -70,15 +99,27 @@
       width: 100%;
       overflow-x: auto;
       overflow-y: hidden;
-      padding-bottom: 6px;
+      padding-bottom: 8px;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
+      scrollbar-color: rgba(17,17,17,0.35) transparent;
+    }
+    .list-viewport::-webkit-scrollbar {
+      height: 4px;
+    }
+    .list-viewport::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .list-viewport::-webkit-scrollbar-thumb {
+      background: rgba(17,17,17,0.28);
+      border-radius: 999px;
     }
     .list {
-      display: flex;
+      display: inline-flex;
       gap: 12px;
       align-items: stretch;
       min-width: 100%;
+      width: max-content;
     }
     .item {
       position: relative;
@@ -89,12 +130,12 @@
       overflow: hidden;
       background: #fff;
       cursor: pointer;
-      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, opacity .15s ease;
+      transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
     }
     .item:hover { transform: translateY(-1px); }
     .item.active {
-      border-color: #111;
-      box-shadow: 0 0 0 2px rgba(17,17,17,0.08);
+      border-color: #e8e8ed;
+      box-shadow: none;
     }
     .item.admin { cursor: grab; }
     .item.dragging { opacity: 0.45; }
@@ -171,7 +212,8 @@
     }
     .modal.active { display: flex; }
     .modal-box {
-      width: min(760px, 100%);
+      width: min(860px, 100%);
+      max-height: min(640px, calc(100vh - 32px));
       background: #fff;
       border-radius: 18px;
       overflow: hidden;
@@ -179,12 +221,15 @@
     }
     .modal-inner {
       display: grid;
-      grid-template-columns: 260px 1fr;
+      grid-template-columns: 300px minmax(0, 1fr);
+      height: min(640px, calc(100vh - 32px));
     }
     .modal-poster {
       background: #ececf1;
-      min-height: 380px;
+      min-height: 0;
+      height: 100%;
       position: relative;
+      overflow: hidden;
     }
     .modal-poster img {
       width: 100%;
@@ -226,11 +271,17 @@
       z-index: 2;
     }
     .image-count.show { display: inline-flex; }
-    .modal-content { padding: 18px; }
+    .modal-content {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
     .modal-content h2 {
       margin: 0 0 8px;
       font-size: 24px;
       line-height: 1.25;
+      flex-shrink: 0;
     }
     .meta-list {
       display: grid;
@@ -238,18 +289,35 @@
       margin-bottom: 14px;
       font-size: 13px;
       color: #444;
+      flex-shrink: 0;
     }
     .detail-desc {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 8px;
       font-size: 14px;
       line-height: 1.7;
       color: #222;
       white-space: pre-wrap;
+      word-break: keep-all;
+    }
+    .detail-desc::-webkit-scrollbar {
+      width: 4px;
+    }
+    .detail-desc::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .detail-desc::-webkit-scrollbar-thumb {
+      background: rgba(17,17,17,0.25);
+      border-radius: 999px;
     }
     .modal-actions {
       display: flex;
       gap: 8px;
-      margin-top: 16px;
+      margin-top: 18px;
       flex-wrap: wrap;
+      flex-shrink: 0;
     }
     .work-nav-btn {
       position: fixed;
@@ -287,9 +355,9 @@
     }
     .work-nav-btn:hover::after { opacity: 1; }
     .work-nav-btn.show { display: inline-flex; }
-    .work-nav-prev { left: max(14px, calc(50% - 430px)); }
+    .work-nav-prev { left: max(14px, calc(50% - 490px)); }
     .work-nav-prev::after { left: 24px; }
-    .work-nav-next { right: max(14px, calc(50% - 430px)); }
+    .work-nav-next { right: max(14px, calc(50% - 490px)); }
     .work-nav-next::after { right: 24px; }
 
     .editor-modal-box {
@@ -345,8 +413,34 @@
     }
     @media (max-width: 760px) {
       .item { flex-basis: calc((100% - 12px) / 2); }
-      .modal-inner { grid-template-columns: 1fr; }
-      .modal-poster { min-height: auto; aspect-ratio: 2 / 3; }
+
+      .modal-box {
+        width: min(100%, 100%);
+        max-height: calc(100vh - 24px);
+      }
+
+      .modal-inner {
+        grid-template-columns: 1fr;
+        height: auto;
+        max-height: calc(100vh - 24px);
+      }
+
+      .modal-poster {
+        min-height: auto;
+        aspect-ratio: 2 / 3;
+        height: auto;
+        max-height: 42vh;
+      }
+
+      .modal-content {
+        min-height: 0;
+        max-height: calc(100vh - 24px - 42vh);
+      }
+
+      .detail-desc {
+        max-height: 28vh;
+      }
+
       .work-nav-btn { font-size: 28px; width: 24px; height: 36px; }
       .work-nav-prev { left: 8px; }
       .work-nav-next { right: 8px; }
@@ -360,7 +454,13 @@
     <h1>참여 프로젝트</h1>
     <div class="top-actions">
       <button id="changePinBtn" class="btn" type="button" style="display:none;">비밀번호 변경</button>
-      <button id="adminBtn" class="btn" type="button">관리자 모드</button>
+      <button
+        id="adminBtn"
+        class="btn icon-btn more-btn"
+        type="button"
+        aria-label="관리자 모드"
+        title="관리자 모드"
+      >⋯</button>
       <button id="addBtn" class="btn dark" type="button" style="display:none;">추가</button>
     </div>
   </div>
@@ -800,6 +900,7 @@
       el.detailRole.textContent = item.role || '-';
       el.detailPlatform.textContent = item.platform || '-';
       el.detailDesc.textContent = item.desc || '';
+      el.detailDesc.scrollTop = 0;
       updateDetailImage(item);
       updateWorkNavButtons();
       el.detailEditBtn.style.display = isAdmin ? 'inline-flex' : 'none';
@@ -907,7 +1008,9 @@
         attachDragHandlers();
       }
 
-      el.adminBtn.textContent = isAdmin ? '관리자 모드 종료' : '관리자 모드';
+      el.adminBtn.classList.toggle('active', isAdmin);
+      el.adminBtn.setAttribute('aria-label', isAdmin ? '관리자 모드 종료' : '관리자 모드');
+      el.adminBtn.setAttribute('title', isAdmin ? '관리자 모드 종료' : '관리자 모드');
       el.addBtn.style.display = isAdmin ? 'inline-flex' : 'none';
       el.changePinBtn.style.display = isAdmin ? 'inline-flex' : 'none';
     }
