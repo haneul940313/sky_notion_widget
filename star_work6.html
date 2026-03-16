@@ -6,6 +6,7 @@
   <title>포트폴리오 위젯</title>
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       padding: 16px;
@@ -13,6 +14,7 @@
       color: #111;
       background: #fff;
     }
+
     button, input, textarea { font: inherit; }
 
     button:focus,
@@ -34,18 +36,21 @@
       gap: 12px;
       margin-bottom: 16px;
     }
+
     h1 {
       margin: 0;
       font-size: 22px;
       line-height: 1.2;
       text-align: left;
     }
+
     .top-actions {
       display: flex;
       gap: 8px;
       align-items: center;
       flex-wrap: wrap;
     }
+
     .btn {
       height: 36px;
       padding: 0 14px;
@@ -59,38 +64,45 @@
       line-height: 1;
       vertical-align: middle;
     }
+
     .btn.dark {
       background: #111;
       border-color: #111;
       color: #fff;
     }
+
     .btn.danger {
       color: #b42318;
       border-color: #efc0c0;
       background: #fff;
     }
+
     .btn.small {
       height: 32px;
       padding: 0 10px;
       font-size: 12px;
     }
+
     .icon-btn {
       width: 36px;
       min-width: 36px;
       height: 36px;
       padding: 0;
     }
+
     .more-btn {
       font-size: 24px;
       font-weight: 700;
       line-height: 1;
       letter-spacing: 2px;
     }
+
     .more-btn.active {
       background: #111;
       color: #fff;
       border-color: #111;
     }
+
     .status-bar {
       display: none;
     }
@@ -104,27 +116,33 @@
       scrollbar-width: thin;
       scrollbar-color: rgba(17,17,17,0.35) transparent;
     }
+
     .list-viewport::-webkit-scrollbar {
       height: 4px;
     }
+
     .list-viewport::-webkit-scrollbar-track {
       background: transparent;
     }
+
     .list-viewport::-webkit-scrollbar-thumb {
       background: rgba(17,17,17,0.28);
       border-radius: 999px;
     }
+
     .list {
-      display: inline-flex;
+      display: flex;
       gap: 12px;
       align-items: stretch;
       min-width: 100%;
       width: max-content;
     }
+
     .item {
       position: relative;
       flex: 0 0 calc((100% - 48px) / 5);
       min-width: 180px;
+      max-width: 220px;
       border: 1px solid #e8e8ed;
       border-radius: 14px;
       overflow: hidden;
@@ -132,23 +150,36 @@
       cursor: pointer;
       transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
     }
-    .item:hover { transform: translateY(-1px); }
+
+    .item:hover {
+      transform: translateY(-1px);
+    }
+
     .item.active {
       border-color: #e8e8ed;
       box-shadow: none;
     }
-    .item.admin { cursor: grab; }
-    .item.dragging { opacity: 0.45; }
+
+    .item.admin {
+      cursor: grab;
+    }
+
+    .item.dragging {
+      opacity: 0.45;
+    }
+
     .item.drag-over {
       border-color: #111;
       box-shadow: 0 0 0 2px rgba(17,17,17,0.14);
     }
+
     .thumb {
       position: relative;
       aspect-ratio: 2 / 3;
       background: #ececf1;
       overflow: hidden;
     }
+
     .thumb img {
       width: 100%;
       height: 100%;
@@ -156,6 +187,7 @@
       display: block;
       pointer-events: none;
     }
+
     .thumb-delete-btn {
       position: absolute;
       top: 10px;
@@ -175,8 +207,15 @@
       cursor: pointer;
       line-height: 1;
     }
-    .item.admin .thumb-delete-btn { display: inline-flex; }
-    .body { padding: 10px; }
+
+    .item.admin .thumb-delete-btn {
+      display: inline-flex;
+    }
+
+    .body {
+      padding: 10px;
+    }
+
     .title {
       font-size: 14px;
       font-weight: 700;
@@ -185,12 +224,17 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
     .meta {
       font-size: 12px;
       color: #666;
       margin-bottom: 10px;
     }
-    .desc { display: none; }
+
+    .desc {
+      display: none;
+    }
+
     .empty {
       width: 100%;
       border: 1px dashed #d9d9de;
@@ -210,33 +254,42 @@
       background: rgba(0,0,0,0.45);
       z-index: 50;
     }
-    .modal.active { display: flex; }
+
+    .modal.active {
+      display: flex;
+    }
+
     .modal-box {
-      width: min(860px, 100%);
-      max-height: min(640px, calc(100vh - 32px));
+      width: min(900px, 100%);
+      height: min(720px, calc(100vh - 32px));
       background: #fff;
       border-radius: 18px;
       overflow: hidden;
       position: relative;
     }
+
     .modal-inner {
       display: grid;
-      grid-template-columns: 300px minmax(0, 1fr);
-      height: min(640px, calc(100vh - 32px));
+      grid-template-columns: 320px minmax(0, 1fr);
+      height: 100%;
+      min-height: 0;
     }
+
     .modal-poster {
       background: #ececf1;
-      min-height: 0;
       height: 100%;
+      min-height: 0;
       position: relative;
       overflow: hidden;
     }
+
     .modal-poster img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
+
     .image-nav-btn {
       position: absolute;
       top: 50%;
@@ -255,9 +308,19 @@
       padding: 0;
       text-shadow: 0 1px 6px rgba(0,0,0,0.55);
     }
-    .image-nav-btn.show { display: inline-flex; }
-    .image-nav-prev { left: 10px; }
-    .image-nav-next { right: 10px; }
+
+    .image-nav-btn.show {
+      display: inline-flex;
+    }
+
+    .image-nav-prev {
+      left: 10px;
+    }
+
+    .image-nav-next {
+      right: 10px;
+    }
+
     .image-count {
       position: absolute;
       right: 10px;
@@ -270,19 +333,27 @@
       display: none;
       z-index: 2;
     }
-    .image-count.show { display: inline-flex; }
+
+    .image-count.show {
+      display: inline-flex;
+    }
+
     .modal-content {
       padding: 22px;
       display: flex;
       flex-direction: column;
+      height: 100%;
       min-height: 0;
+      overflow: hidden;
     }
+
     .modal-content h2 {
       margin: 0 0 8px;
       font-size: 24px;
       line-height: 1.25;
       flex-shrink: 0;
     }
+
     .meta-list {
       display: grid;
       gap: 8px;
@@ -291,27 +362,34 @@
       color: #444;
       flex-shrink: 0;
     }
+
     .detail-desc {
-      flex: 1;
+      flex: 1 1 auto;
       min-height: 0;
+      height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
       padding-right: 8px;
       font-size: 14px;
       line-height: 1.7;
       color: #222;
       white-space: pre-wrap;
-      word-break: keep-all;
+      word-break: break-word;
     }
+
     .detail-desc::-webkit-scrollbar {
       width: 4px;
     }
+
     .detail-desc::-webkit-scrollbar-track {
       background: transparent;
     }
+
     .detail-desc::-webkit-scrollbar-thumb {
       background: rgba(17,17,17,0.25);
       border-radius: 999px;
     }
+
     .modal-actions {
       display: flex;
       gap: 8px;
@@ -319,6 +397,7 @@
       flex-wrap: wrap;
       flex-shrink: 0;
     }
+
     .work-nav-btn {
       position: fixed;
       top: 50%;
@@ -337,6 +416,7 @@
       padding: 0;
       text-shadow: 0 1px 8px rgba(0,0,0,0.65);
     }
+
     .work-nav-btn::after {
       content: attr(data-label);
       position: absolute;
@@ -353,12 +433,30 @@
       transition: opacity .15s ease;
       white-space: nowrap;
     }
-    .work-nav-btn:hover::after { opacity: 1; }
-    .work-nav-btn.show { display: inline-flex; }
-    .work-nav-prev { left: max(14px, calc(50% - 490px)); }
-    .work-nav-prev::after { left: 24px; }
-    .work-nav-next { right: max(14px, calc(50% - 490px)); }
-    .work-nav-next::after { right: 24px; }
+
+    .work-nav-btn:hover::after {
+      opacity: 1;
+    }
+
+    .work-nav-btn.show {
+      display: inline-flex;
+    }
+
+    .work-nav-prev {
+      left: max(14px, calc(50% - 510px));
+    }
+
+    .work-nav-prev::after {
+      left: 24px;
+    }
+
+    .work-nav-next {
+      right: max(14px, calc(50% - 510px));
+    }
+
+    .work-nav-next::after {
+      right: 24px;
+    }
 
     .editor-modal-box {
       width: min(620px, 100%);
@@ -366,18 +464,24 @@
       border-radius: 18px;
       padding: 16px;
     }
+
     .editor-title {
       margin: 0 0 12px;
       font-size: 18px;
       font-weight: 700;
     }
-    .field { margin-bottom: 10px; }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
     .field label {
       display: block;
       font-size: 12px;
       margin-bottom: 6px;
       color: #444;
     }
+
     .input, .textarea {
       width: 100%;
       border: 1px solid #d9d9de;
@@ -386,66 +490,99 @@
       background: #fff;
       outline: none;
     }
-    .input { height: 38px; padding: 0 12px; }
-    .textarea { min-height: 90px; resize: vertical; }
+
+    .input {
+      height: 38px;
+      padding: 0 12px;
+    }
+
+    .textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
     .hint {
       margin-top: 5px;
       font-size: 11px;
       color: #777;
       line-height: 1.4;
     }
+
     .editor-actions {
       display: flex;
       gap: 8px;
       margin-top: 12px;
       flex-wrap: wrap;
     }
+
     .editor-status {
       margin-top: 10px;
       font-size: 12px;
       color: #666;
       min-height: 18px;
     }
-    .editor-status.error { color: #c62828; }
+
+    .editor-status.error {
+      color: #c62828;
+    }
 
     @media (max-width: 980px) {
-      .item { flex-basis: calc((100% - 24px) / 3); }
+      .item {
+        flex: 0 0 calc((100% - 24px) / 3);
+        max-width: none;
+      }
     }
+
     @media (max-width: 760px) {
-      .item { flex-basis: calc((100% - 12px) / 2); }
+      .item {
+        flex: 0 0 calc((100% - 12px) / 2);
+        max-width: none;
+      }
 
       .modal-box {
-        width: min(100%, 100%);
-        max-height: calc(100vh - 24px);
+        width: 100%;
+        height: calc(100vh - 24px);
       }
 
       .modal-inner {
         grid-template-columns: 1fr;
-        height: auto;
-        max-height: calc(100vh - 24px);
+        grid-template-rows: minmax(220px, 42vh) minmax(0, 1fr);
       }
 
       .modal-poster {
-        min-height: auto;
-        aspect-ratio: 2 / 3;
-        height: auto;
-        max-height: 42vh;
+        height: 100%;
+        min-height: 0;
       }
 
       .modal-content {
+        height: 100%;
         min-height: 0;
-        max-height: calc(100vh - 24px - 42vh);
       }
 
       .detail-desc {
-        max-height: 28vh;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 0;
       }
 
-      .work-nav-btn { font-size: 28px; width: 24px; height: 36px; }
-      .work-nav-prev { left: 8px; }
-      .work-nav-next { right: 8px; }
+      .work-nav-btn {
+        font-size: 28px;
+        width: 24px;
+        height: 36px;
+      }
+
+      .work-nav-prev {
+        left: 8px;
+      }
+
+      .work-nav-next {
+        right: 8px;
+      }
+
       .work-nav-prev::after,
-      .work-nav-next::after { display: none; }
+      .work-nav-next::after {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -466,6 +603,7 @@
   </div>
 
   <div id="pageStatus" class="status-bar"></div>
+
   <div class="list-viewport">
     <div id="list" class="list"></div>
   </div>
@@ -683,14 +821,17 @@
       el.pageStatus.textContent = text;
       el.pageStatus.classList.toggle('error', !!isError);
     }
+
     function setEditorStatus(text = '', isError = false) {
       el.editorStatus.textContent = text;
       el.editorStatus.classList.toggle('error', !!isError);
     }
+
     function setPinStatus(text = '', isError = false) {
       el.pinStatus.textContent = text;
       el.pinStatus.classList.toggle('error', !!isError);
     }
+
     function setChangePinStatus(text = '', isError = false) {
       el.changePinStatus.textContent = text;
       el.changePinStatus.classList.toggle('error', !!isError);
@@ -750,29 +891,37 @@
     function saveAdminMode() {
       localStorage.setItem(ADMIN_KEY, isAdmin ? 'true' : 'false');
     }
+
     function saveAdminPin() {
       localStorage.setItem(ADMIN_PIN_KEY, adminPin);
     }
 
-    function closeDetail() { el.detailModal.classList.remove('active'); }
+    function closeDetail() {
+      el.detailModal.classList.remove('active');
+    }
+
     function openPinModal() {
       el.pinInput.value = '';
       setPinStatus('');
       el.pinModal.classList.add('active');
     }
+
     function closePinModal() {
       el.pinModal.classList.remove('active');
       el.pinInput.value = '';
       setPinStatus('');
     }
+
     function openDeleteModal(id) {
       pendingDeleteId = id;
       el.deleteModal.classList.add('active');
     }
+
     function closeDeleteModal() {
       pendingDeleteId = null;
       el.deleteModal.classList.remove('active');
     }
+
     function openChangePinModal() {
       el.currentPinInput.value = '';
       el.newPinInput.value = '';
@@ -780,6 +929,7 @@
       setChangePinStatus('');
       el.changePinModal.classList.add('active');
     }
+
     function closeChangePinModal() {
       el.changePinModal.classList.remove('active');
       el.currentPinInput.value = '';
@@ -787,11 +937,16 @@
       el.newPinConfirmInput.value = '';
       setChangePinStatus('');
     }
-    function openEditor() { el.editorModal.classList.add('active'); }
+
+    function openEditor() {
+      el.editorModal.classList.add('active');
+    }
+
     function clearFileInputs() {
       el.poster.value = '';
       el.extras.value = '';
     }
+
     function resetEditorFields() {
       editingId = null;
       activeId = null;
@@ -805,6 +960,7 @@
       el.editorTitle.textContent = '작품 추가';
       setEditorStatus('');
     }
+
     function closeEditor() {
       el.editorModal.classList.remove('active');
       resetEditorFields();
@@ -869,9 +1025,11 @@
       div.textContent = text || '';
       return div.innerHTML;
     }
+
     function getImageList(item) {
       return [item.poster || PLACEHOLDER, ...(item.extras || [])].filter(Boolean);
     }
+
     function updateDetailImage(item) {
       const images = getImageList(item);
       currentImageIndex = Math.max(0, Math.min(currentImageIndex, images.length - 1));
@@ -881,6 +1039,7 @@
       el.imageCount.classList.toggle('show', images.length > 1);
       el.imageCount.textContent = images.length > 1 ? `${currentImageIndex + 1} / ${images.length}` : '';
     }
+
     function updateWorkNavButtons() {
       const show = items.length > 1;
       el.workPrevBtn.classList.toggle('show', show);
@@ -891,16 +1050,20 @@
       if (!items.length) return;
       if (index < 0) index = items.length - 1;
       if (index >= items.length) index = 0;
+
       currentDetailIndex = index;
       currentImageIndex = 0;
+
       const item = items[index];
       activeId = item.id;
+
       el.detailTitle.textContent = item.title || '';
       el.detailYear.textContent = item.year || '-';
       el.detailRole.textContent = item.role || '-';
       el.detailPlatform.textContent = item.platform || '-';
       el.detailDesc.textContent = item.desc || '';
       el.detailDesc.scrollTop = 0;
+
       updateDetailImage(item);
       updateWorkNavButtons();
       el.detailEditBtn.style.display = isAdmin ? 'inline-flex' : 'none';
@@ -935,8 +1098,10 @@
 
     function attachDragHandlers() {
       if (!isAdmin) return;
+
       el.list.querySelectorAll('.item').forEach(card => {
         card.setAttribute('draggable', 'true');
+
         card.addEventListener('dragstart', (e) => {
           if (e.target.closest('.thumb-delete-btn')) {
             e.preventDefault();
@@ -946,25 +1111,34 @@
           card.classList.add('dragging');
           e.dataTransfer.effectAllowed = 'move';
         });
+
         card.addEventListener('dragend', () => {
           dragId = null;
           card.classList.remove('dragging');
           el.list.querySelectorAll('.item').forEach(v => v.classList.remove('drag-over'));
         });
+
         card.addEventListener('dragover', (e) => {
           e.preventDefault();
           if (Number(card.dataset.id) === dragId) return;
           card.classList.add('drag-over');
         });
+
         card.addEventListener('dragleave', () => {
           card.classList.remove('drag-over');
         });
+
         card.addEventListener('drop', async (e) => {
           e.preventDefault();
           const toId = Number(card.dataset.id);
           card.classList.remove('drag-over');
           reorderItems(dragId, toId);
-          try { await saveItems(); render(); } catch { setEditorStatus('순서를 저장하지 못했습니다.', true); }
+          try {
+            await saveItems();
+            render();
+          } catch {
+            setEditorStatus('순서를 저장하지 못했습니다.', true);
+          }
         });
       });
     }
@@ -1039,6 +1213,7 @@
     });
 
     el.pinCancelBtn.addEventListener('click', closePinModal);
+
     el.pinInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') el.pinConfirmBtn.click();
     });
@@ -1052,18 +1227,22 @@
       const current = el.currentPinInput.value.trim();
       const next = el.newPinInput.value.trim();
       const confirmNext = el.newPinConfirmInput.value.trim();
+
       if (current !== adminPin) {
         setChangePinStatus('현재 비밀번호가 올바르지 않습니다.', true);
         return;
       }
+
       if (!/^\d{4}$/.test(next)) {
         setChangePinStatus('새 비밀번호는 4자리 숫자로 입력해 주세요.', true);
         return;
       }
+
       if (next !== confirmNext) {
         setChangePinStatus('새 비밀번호 확인이 일치하지 않습니다.', true);
         return;
       }
+
       adminPin = next;
       saveAdminPin();
       closeChangePinModal();
@@ -1084,7 +1263,9 @@
 
     el.deleteConfirmBtn.addEventListener('click', async () => {
       if (!isAdmin || !pendingDeleteId) return;
+
       items = items.filter(v => v.id !== pendingDeleteId);
+
       try {
         await saveItems();
         if (editingId === pendingDeleteId) closeEditor();
@@ -1106,6 +1287,7 @@
 
     el.saveBtn.addEventListener('click', async () => {
       const title = el.title.value.trim();
+
       if (!title) {
         setEditorStatus('작품명을 입력해 주세요.', true);
         return;
@@ -1196,15 +1378,19 @@
     el.detailModal.addEventListener('click', (e) => {
       if (e.target === el.detailModal) closeDetail();
     });
+
     el.pinModal.addEventListener('click', (e) => {
       if (e.target === el.pinModal) closePinModal();
     });
+
     el.deleteModal.addEventListener('click', (e) => {
       if (e.target === el.deleteModal) closeDeleteModal();
     });
+
     el.changePinModal.addEventListener('click', (e) => {
       if (e.target === el.changePinModal) closeChangePinModal();
     });
+
     el.editorModal.addEventListener('click', (e) => {
       if (e.target === el.editorModal) closeEditor();
     });
