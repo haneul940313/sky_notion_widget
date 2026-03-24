@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clonote Timer</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: transparent;
+    color: #111;
+  }
+  body { display: block; }
+  .wrap {
+    width: 360px;
+    background: rgba(255,255,255,0.96);
+    border: 1px solid #e8e8e8;
+    border-radius: 24px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+    padding: 18px;
+    position: relative;
+    margin: 0;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+  }
+  .menu-btn {
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: #555;
+    padding: 4px 8px;
+    border-radius: 10px;
+  }
+  .menu-btn:hover { background: #f0f0f0; }
+  .menu {
+    position: absolute;
+    top: 52px;
+    right: 18px;
+    width: 180px;
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    padding: 10px;
+    display: none;
+    z-index: 5;
+  }
+  .menu.open { display: block; }
+  .menu-group { margin-bottom: 12px; }
+  .menu-group:last-child { margin-bottom: 0; }
+  .menu label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+  }
+  .menu select {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 13px;
+    outline: none;
+    background: #fff;
+  }
+  .timer {
+    text-align: center;
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin: 8px 0 8px;
+  }
+  .status {
+    text-align: center;
+    font-size: 13px;
+    color: #777;
+    min-height: 18px;
+    margin-bottom: 14px;
+  }
+  .time-setting {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .time-setting input {
+    flex: 1;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 14px;
+    outline: none;
+  }
+  .time-setting button,
+  .controls button {
+    border: 0;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.15s ease;
+  }
+  .set-btn {
+    background: #111;
+    color: #fff;
+    padding: 0 14px;
+    white-space: nowrap;
+  }
+  .set-btn:hover { opacity: 0.9; }
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .controls button {
+    padding: 12px 0;
+    background: #efefef;
+    color: #111;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .controls button.primary {
+    background: #111;
+    color: #fff;
+  }
+  .controls button:hover { opacity: 0.92; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title" id="appTitle">Clonote</div>
+      <button class="menu-btn" id="menuBtn">⋯</button>
+    </div>
+
+    <div class="menu" id="menu">
+      <div class="menu-group">
+        <label for="soundSelect">알림음</label>
+        <select id="soundSelect">
+          <option value="vibe">진동 소리</option>
+          <option value="beep">삡</option>
+          <option value="default">띠딧 띠딧</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="timer" id="timer">25:00</div>
+    <div class="status" id="status">시간을 설정하고 시작하세요</div>
+
+    <div class="time-setting">
+      <input type="number" id="minutesInput" min="1" max="180" value="25" placeholder="분 입력" />
+      <button class="set-btn" id="setBtn">설정</button>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="startBtn">시작</button>
+      <button id="pauseBtn">일시정지</button>
+      <button id="resetBtn">리셋</button>
+      <button id="stopSoundBtn">소리 끄기</button>
+    </div>
+  </div>
+
+<script>
+  const appTitle = document.getElementById("appTitle");
+  const timerEl = document.getElementById("timer");
+  const statusEl = document.getElementById("status");
+  const minutesInput = document.getElementById("minutesInput");
+  const setBtn = document.getElementById("setBtn");
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const stopSoundBtn = document.getElementById("stopSoundBtn");
+  const menuBtn = document.getElementById("menuBtn");
+  const menu = document.getElementById("menu");
+  const soundSelect = document.getElementById("soundSelect");
+
+  let totalSeconds = 25 * 60;
+  let remainingSeconds = totalSeconds;
+  let timer = null;
+  let isRunning = false;
+  let audioCtx = null;
+  let activeTimeouts = [];
+  let activeNodes = [];
+  let alarmRunning = false;
+
+  function applyTitleFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("v");
+    const safeTitle = (v && v.trim()) ? v.trim() : "Clonote";
+    appTitle.textContent = safeTitle;
+    document.title = safeTitle;
+  }
+
+  function getAudioContext() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!audioCtx) audioCtx = new AudioCtx();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function clearSoundQueue() {
+    activeTimeouts.forEach(id => clearTimeout(id));
+    activeTimeouts = [];
+  }
+
+  function stopAllSound() {
+    clearSoundQueue();
+    activeNodes.forEach(node => {
+      try { node.gain.disconnect(); } catch (e) {}
+      try { node.osc.stop(); } catch (e) {}
+      try { node.osc.disconnect(); } catch (e) {}
+    });
+    activeNodes = [];
+    alarmRunning = false;
+    statusEl.textContent = "알림 소리를 껐어요";
+  }
+
+  function formatTime(sec) {
+    const m = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
+  function renderTime() {
+    timerEl.textContent = formatTime(remainingSeconds);
+  }
+
+  function setTime() {
+    const value = parseInt(minutesInput.value, 10);
+    if (!value || value < 1) return;
+    totalSeconds = value * 60;
+    remainingSeconds = totalSeconds;
+    clearInterval(timer);
+    timer = null;
+    isRunning = false;
+    renderTime();
+    statusEl.textContent = `${value}분으로 설정됐어요`;
+  }
+
+  function playTone(frequency = 880, duration = 180, type = "sine", volume = 0.55) {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.value = frequency;
+    gain.gain.value = 0.0001;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    osc.start(now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration / 1000);
+    osc.stop(now + duration / 1000 + 0.05);
+
+    const nodeRef = { osc, gain };
+    activeNodes.push(nodeRef);
+
+    const cleanupId = setTimeout(() => {
+      activeNodes = activeNodes.filter(n => n !== nodeRef);
+      try { osc.disconnect(); } catch (e) {}
+      try { gain.disconnect(); } catch (e) {}
+    }, duration + 200);
+    activeTimeouts.push(cleanupId);
+  }
+
+  function scheduleSound(fn, delay) {
+    const id = setTimeout(() => {
+      if (alarmRunning) fn();
+    }, delay);
+    activeTimeouts.push(id);
+  }
+
+  function playVibePattern() {
+    playTone(95, 260, "sawtooth", 0.7);
+    scheduleSound(() => playTone(80, 260, "sawtooth", 0.68), 220);
+    scheduleSound(() => playTone(95, 280, "sawtooth", 0.7), 460);
+  }
+
+  function playBeepPattern() {
+    playTone(980, 350, "square", 0.78);
+  }
+
+  function playDefaultPattern() {
+    playTone(880, 180, "triangle", 0.72);
+    scheduleSound(() => playTone(660, 240, "triangle", 0.72), 220);
+  }
+
+  function playAlarmForFiveSeconds() {
+    stopAllSound();
+    alarmRunning = true;
+
+    const selected = soundSelect.value;
+    const totalDuration = 5000;
+
+    if (selected === "vibe") {
+      for (let t = 0; t < totalDuration; t += 800) {
+        scheduleSound(playVibePattern, t);
+      }
+    } else if (selected === "beep") {
+      for (let t = 0; t < totalDuration; t += 700) {
+        scheduleSound(playBeepPattern, t);
+      }
+    } else {
+      for (let t = 0; t < totalDuration; t += 700) {
+        scheduleSound(playDefaultPattern, t);
+      }
+    }
+
+    const endId = setTimeout(() => {
+      alarmRunning = false;
+      activeNodes = [];
+    }, totalDuration + 200);
+    activeTimeouts.push(endId);
+  }
+
+  function notifyDone() {
+    playAlarmForFiveSeconds();
+    statusEl.textContent = "완료됐어요";
+
+    if (document.hidden && "Notification" in window) {
+      if (Notification.permission === "granted") {
+        new Notification(appTitle.textContent, { body: "설정한 시간이 완료됐어요." });
+      }
+    }
+  }
+
+  function startTimer() {
+    getAudioContext();
+
+    if (isRunning) return;
+    if (remainingSeconds <= 0) remainingSeconds = totalSeconds;
+
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    isRunning = true;
+    statusEl.textContent = "집중 중";
+    timer = setInterval(() => {
+      remainingSeconds--;
+      renderTime();
+
+      if (remainingSeconds <= 0) {
+        clearInterval(timer);
+        timer = null;
+        isRunning = false;
+        remainingSeconds = 0;
+        renderTime();
+        notifyDone();
+      }
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    clearInterval(timer);
+    timer = null;
+    isRunning = false;
+    statusEl.textContent = "일시정지됨";
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    timer = null;
+    isRunning = false;
+    stopAllSound();
+    remainingSeconds = totalSeconds;
+    renderTime();
+    statusEl.textContent = "초기화됐어요";
+  }
+
+  menuBtn.addEventListener("click", () => {
+    menu.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+      menu.classList.remove("open");
+    }
+  });
+
+  setBtn.addEventListener("click", setTime);
+  startBtn.addEventListener("click", startTimer);
+  pauseBtn.addEventListener("click", pauseTimer);
+  resetBtn.addEventListener("click", resetTimer);
+  stopSoundBtn.addEventListener("click", stopAllSound);
+
+  applyTitleFromQuery();
+  renderTime();
+</script>
+</body>
+</html>
