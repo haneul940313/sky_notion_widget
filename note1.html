@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clonote</title>
+
+<style>
+* { box-sizing: border-box; }
+
+:root {
+  --paper-bg: #fbfbf8;
+  --line-color: rgba(132, 184, 196, 0.48);
+  --margin-line: rgba(208, 112, 112, 0.45);
+  --text: #2f2f2f;
+  --muted: #7a7a7a;
+  --sat: #5d86c8;
+  --sun: #d06f6f;
+
+  --row-h: 24px;
+  --date-col: 56px;
+  --margin-x: 64px;
+}
+
+body {
+  margin: 0;
+  font-family: Arial;
+}
+
+.widget {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--paper-bg);
+}
+
+/* HEADER */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.month-title {
+  font-weight: 700;
+}
+
+.user-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.menu-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* LOGIN */
+
+.login-box {
+  display: none;
+  margin-bottom: 6px;
+}
+
+.login-box.show {
+  display: block;
+}
+
+/* SHEET */
+
+.sheet {
+  background:
+    linear-gradient(
+      to right,
+      transparent calc(var(--margin-x) - 1px),
+      var(--margin-line) calc(var(--margin-x)),
+      transparent calc(var(--margin-x) + 1px)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(var(--row-h) - 1px),
+      var(--line-color) calc(var(--row-h))
+    );
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--date-col) 1fr;
+  height: var(--row-h);
+}
+
+.day-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.day-cell.sat { color: var(--sat); }
+.day-cell.sun { color: var(--sun); }
+
+.memo-cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.memo-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* FOOTER */
+
+.footer {
+  font-size: 10px;
+  text-align: right;
+  margin-top: 4px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="widget">
+
+  <div class="header">
+    <button id="prevBtn">‹</button>
+    <div class="month-title" id="monthTitle"></div>
+    <button id="nextBtn">›</button>
+
+    <div class="user-block">
+      <div id="userNameText"></div>
+      <button class="menu-btn" id="logoutBtn">⋯</button>
+    </div>
+  </div>
+
+  <div class="login-box" id="loginBox">
+    <input id="loginNameInput" placeholder="이름">
+    <input id="loginPasswordInput" placeholder="비밀번호">
+    <button id="startBtn">시작</button>
+  </div>
+
+  <div class="sheet" id="sheet"></div>
+
+  <div class="footer">© Clonote</div>
+
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwGH-ox_WAhBKAqyjP5RYh4bozGgW1rCUaDVCVeRoHISUktfX0leoimwFh82itpFdt9IA/exec";
+
+const STORAGE_KEY = "clonote_token";
+const STORAGE_USER = "clonote_user";
+const STORAGE_RECORD = "clonote_record";
+
+/* STATE */
+let currentDate = new Date();
+let currentUser = null;
+let token = localStorage.getItem(STORAGE_KEY);
+
+/* UTIL */
+function cacheKey() {
+  if (!currentUser) return "";
+  return STORAGE_RECORD + currentUser.userId + currentDate.getMonth();
+}
+
+/* RENDER */
+function renderHeader() {
+  monthTitle.textContent = `${currentDate.getFullYear()}년 ${currentDate.getMonth()+1}월`;
+  userNameText.textContent = currentUser?.userName || "사용자";
+}
+
+function renderSheet(data=[]) {
+  const last = new Date(currentDate.getFullYear(), currentDate.getMonth()+1,0).getDate();
+
+  let html = "";
+  for(let i=1;i<=last;i++){
+    const memo = data.find(r=>r.day==i)?.memo || "";
+
+    html += `
+      <div class="row">
+        <div class="day-cell">${i}</div>
+        <div class="memo-cell">
+          <input class="memo-input" data-day="${i}" value="${memo}">
+        </div>
+      </div>
+    `;
+  }
+  sheet.innerHTML = html;
+}
+
+/* API */
+async function api(body){
+  const res = await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify(body)
+  });
+  return res.json();
+}
+
+/* LOAD */
+async function load(){
+  renderHeader();
+
+  // 캐시 먼저
+  const cache = JSON.parse(localStorage.getItem(cacheKey())||"[]");
+  renderSheet(cache);
+
+  // 서버
+  const res = await fetch(`${API_URL}?action=getRecords&userId=${currentUser.userId}&year=${currentDate.getFullYear()}&month=${currentDate.getMonth()+1}`);
+  const data = await res.json();
+
+  renderSheet(data.records);
+  localStorage.setItem(cacheKey(), JSON.stringify(data.records));
+}
+
+/* LOGIN */
+async function start(){
+  const name = loginNameInput.value;
+  const pw = loginPasswordInput.value;
+
+  await api({action:"registerUser", userName:name, password:pw});
+  const res = await api({action:"login", userName:name, password:pw});
+
+  token = res.token;
+  currentUser = res.user;
+
+  localStorage.setItem(STORAGE_KEY, token);
+  localStorage.setItem(STORAGE_USER, JSON.stringify(currentUser));
+
+  load();
+}
+
+/* INIT */
+async function init(){
+
+  const cachedUser = JSON.parse(localStorage.getItem(STORAGE_USER));
+
+  if(token && cachedUser){
+    currentUser = cachedUser;
+    renderHeader();
+    load();
+
+    const check = await fetch(`${API_URL}?action=autoLogin&token=${token}`);
+    const result = await check.json();
+
+    if(!result.success){
+      localStorage.clear();
+      location.reload();
+    }
+    return;
+  }
+
+  loginBox.classList.add("show");
+}
+
+/* EVENT */
+startBtn.onclick = start;
+prevBtn.onclick = ()=>{currentDate.setMonth(currentDate.getMonth()-1); load();}
+nextBtn.onclick = ()=>{currentDate.setMonth(currentDate.getMonth()+1); load();}
+logoutBtn.onclick = ()=>{
+  localStorage.clear();
+  location.reload();
+};
+
+init();
+</script>
+
+</body>
+</html>
