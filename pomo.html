@@ -6,32 +6,45 @@
 <title>Clonote Timer</title>
 <style>
   * { box-sizing: border-box; }
+
   html, body {
     margin: 0;
     padding: 0;
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: transparent;
     color: #111;
   }
-  body { display: block; }
+
+  body {
+    display: block;
+  }
+
+  .frame {
+    width: 100%;
+    padding: 0;
+  }
+
   .wrap {
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
     background: rgba(255,255,255,0.96);
     border: 1px solid #e8e8e8;
     border-radius: 24px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.04);
     padding: 18px;
     position: relative;
-    margin: 0;
+    margin: 0 auto;
   }
+
   .top {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
   }
+
   .title {
     font-size: 15px;
     font-weight: 700;
@@ -39,8 +52,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 250px;
+    max-width: calc(100% - 40px);
   }
+
   .menu-btn {
     border: 0;
     background: transparent;
@@ -50,8 +64,11 @@
     color: #555;
     padding: 4px 8px;
     border-radius: 10px;
+    flex-shrink: 0;
   }
+
   .menu-btn:hover { background: #f0f0f0; }
+
   .menu {
     position: absolute;
     top: 52px;
@@ -65,15 +82,19 @@
     display: none;
     z-index: 5;
   }
+
   .menu.open { display: block; }
+
   .menu-group { margin-bottom: 12px; }
   .menu-group:last-child { margin-bottom: 0; }
+
   .menu label {
     display: block;
     font-size: 12px;
     color: #666;
     margin-bottom: 6px;
   }
+
   .menu select {
     width: 100%;
     border: 1px solid #ddd;
@@ -83,13 +104,16 @@
     outline: none;
     background: #fff;
   }
+
   .timer {
     text-align: center;
     font-size: 52px;
     font-weight: 800;
     letter-spacing: -2px;
     margin: 8px 0 8px;
+    line-height: 1.05;
   }
+
   .status {
     text-align: center;
     font-size: 13px;
@@ -97,13 +121,16 @@
     min-height: 18px;
     margin-bottom: 14px;
   }
+
   .time-setting {
     display: flex;
     gap: 8px;
     margin-bottom: 12px;
   }
+
   .time-setting input {
     flex: 1;
+    min-width: 0;
     border: 1px solid #ddd;
     background: #fff;
     border-radius: 14px;
@@ -111,6 +138,7 @@
     font-size: 14px;
     outline: none;
   }
+
   .time-setting button,
   .controls button {
     border: 0;
@@ -119,18 +147,23 @@
     font-size: 13px;
     transition: 0.15s ease;
   }
+
   .set-btn {
     background: #111;
     color: #fff;
     padding: 0 14px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
+
   .set-btn:hover { opacity: 0.9; }
+
   .controls {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
   }
+
   .controls button {
     padding: 12px 0;
     background: #efefef;
@@ -138,44 +171,102 @@
     font-weight: 600;
     white-space: nowrap;
   }
+
   .controls button.primary {
     background: #111;
     color: #fff;
   }
+
   .controls button:hover { opacity: 0.92; }
+
+  @media (max-width: 420px) {
+    .wrap {
+      max-width: 100%;
+      border-radius: 20px;
+      padding: 16px;
+    }
+
+    .timer {
+      font-size: 46px;
+      margin: 6px 0 8px;
+    }
+
+    .controls button {
+      font-size: 12px;
+      padding: 11px 0;
+    }
+
+    .time-setting input {
+      font-size: 13px;
+      padding: 11px 12px;
+    }
+
+    .set-btn {
+      padding: 0 12px;
+    }
+  }
+
+  @media (max-width: 340px) {
+    .wrap {
+      padding: 14px;
+    }
+
+    .timer {
+      font-size: 42px;
+    }
+
+    .controls {
+      gap: 6px;
+    }
+
+    .controls button {
+      font-size: 11px;
+      padding: 10px 0;
+    }
+
+    .time-setting {
+      gap: 6px;
+    }
+
+    .time-setting input {
+      padding: 10px 12px;
+    }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="title" id="appTitle">Clonote</div>
-      <button class="menu-btn" id="menuBtn">⋯</button>
-    </div>
-
-    <div class="menu" id="menu">
-      <div class="menu-group">
-        <label for="soundSelect">알림음</label>
-        <select id="soundSelect">
-          <option value="vibe">진동 소리</option>
-          <option value="beep">삡</option>
-          <option value="default">띠딧 띠딧</option>
-        </select>
+  <div class="frame">
+    <div class="wrap">
+      <div class="top">
+        <div class="title" id="appTitle">Clonote</div>
+        <button class="menu-btn" id="menuBtn">⋯</button>
       </div>
-    </div>
 
-    <div class="timer" id="timer">25:00</div>
-    <div class="status" id="status">시간을 설정하고 시작하세요</div>
+      <div class="menu" id="menu">
+        <div class="menu-group">
+          <label for="soundSelect">알림음</label>
+          <select id="soundSelect">
+            <option value="vibe">진동 소리</option>
+            <option value="beep">삡</option>
+            <option value="default">띠딧 띠딧</option>
+          </select>
+        </div>
+      </div>
 
-    <div class="time-setting">
-      <input type="number" id="minutesInput" min="1" max="180" value="25" placeholder="분 입력" />
-      <button class="set-btn" id="setBtn">설정</button>
-    </div>
+      <div class="timer" id="timer">25:00</div>
+      <div class="status" id="status">시간을 설정하고 시작하세요</div>
 
-    <div class="controls">
-      <button class="primary" id="startBtn">시작</button>
-      <button id="pauseBtn">일시정지</button>
-      <button id="resetBtn">리셋</button>
-      <button id="stopSoundBtn">소리 끄기</button>
+      <div class="time-setting">
+        <input type="number" id="minutesInput" min="1" max="180" value="25" placeholder="분 입력" />
+        <button class="set-btn" id="setBtn">설정</button>
+      </div>
+
+      <div class="controls">
+        <button class="primary" id="startBtn">시작</button>
+        <button id="pauseBtn">일시정지</button>
+        <button id="resetBtn">리셋</button>
+        <button id="stopSoundBtn">소리 끄기</button>
+      </div>
     </div>
   </div>
 
