@@ -9,25 +9,25 @@
 
     :root {
       --paper-bg: #fbfbf8;
-      --line-color: rgba(132, 184, 196, 0.55);
-      --margin-line: rgba(208, 112, 112, 0.55);
+      --line-color: rgba(132, 184, 196, 0.48);
+      --margin-line: rgba(208, 112, 112, 0.48);
       --text: #2f2f2f;
       --muted: #767676;
       --sat: #5d86c8;
       --sun: #d06f6f;
-      --glass: rgba(255, 255, 255, 0.72);
-      --glass-strong: rgba(255, 255, 255, 0.92);
-      --shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+      --glass: rgba(255, 255, 255, 0.74);
+      --glass-strong: rgba(255, 255, 255, 0.95);
+      --shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
 
-      /* 공책 한 칸 높이 */
-      --row-h: 36px;
+      /* 핵심: 노트 한 줄 높이 = 날짜 한 줄 높이 */
+      --row-h: 24px;
 
-      /* 글씨를 칸 중앙으로 보내기 위해 실제 컨텐츠 높이는 더 작게 */
-      --content-h: 28px;
+      /* 노트 선 위치 미세 조정 */
+      --line-offset: 0px;
 
-      --date-col: 78px;
-      --save-col: 54px;
-      --margin-x: 92px;
+      --date-col: 56px;
+      --save-col: 28px;
+      --margin-x: 64px;
     }
 
     html, body {
@@ -44,66 +44,49 @@
 
     .widget {
       width: 100%;
-      max-width: 780px;
+      max-width: 720px;
       margin: 0 auto;
-      padding: 14px 16px 10px;
-      border-radius: 20px;
-      overflow: hidden;
+      padding: 10px 12px 8px;
+      border-radius: 18px;
       border: 1px solid rgba(0, 0, 0, 0.05);
       box-shadow: var(--shadow);
-      background:
-        linear-gradient(
-          to right,
-          transparent 0,
-          transparent calc(var(--margin-x) - 1px),
-          var(--margin-line) calc(var(--margin-x) - 1px),
-          var(--margin-line) calc(var(--margin-x) + 1px),
-          transparent calc(var(--margin-x) + 1px),
-          transparent 100%
-        ),
-        repeating-linear-gradient(
-          to bottom,
-          var(--paper-bg) 0,
-          var(--paper-bg) calc(var(--row-h) - 1px),
-          var(--line-color) calc(var(--row-h) + 2px),
-          var(--line-color) var(--row-h)
-        );
+      background: var(--paper-bg);
+      overflow: hidden;
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 6px;
-      padding: 2px 0 10px;
-      background: rgba(255, 255, 255, 0.42);
-      backdrop-filter: blur(4px);
+      gap: 10px;
+      margin-bottom: 4px;
+      padding-bottom: 6px;
+      background: rgba(255, 255, 255, 0.35);
     }
 
     .header-left,
     .header-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       min-width: 0;
     }
 
     .month-title {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 700;
       letter-spacing: -0.02em;
       white-space: nowrap;
     }
 
     .user-name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #3f3f3f;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 180px;
+      max-width: 150px;
     }
 
     .icon-btn,
@@ -111,24 +94,24 @@
       border: 1px solid rgba(0, 0, 0, 0.07);
       background: var(--glass-strong);
       color: #222;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
       transition: transform 0.15s ease, background 0.15s ease;
     }
 
     .icon-btn {
-      width: 34px;
-      height: 34px;
+      width: 28px;
+      height: 28px;
       padding: 0;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
       line-height: 1;
     }
 
     .text-btn {
-      height: 38px;
-      padding: 0 14px;
-      font-size: 13px;
+      height: 32px;
+      padding: 0 12px;
+      font-size: 12px;
       font-weight: 600;
       white-space: nowrap;
     }
@@ -141,9 +124,9 @@
 
     .register-box {
       display: none;
-      margin-bottom: 8px;
-      padding: 12px;
-      border-radius: 14px;
+      margin-bottom: 6px;
+      padding: 10px;
+      border-radius: 12px;
       background: var(--glass);
       border: 1px solid rgba(0, 0, 0, 0.05);
       backdrop-filter: blur(4px);
@@ -154,24 +137,24 @@
     }
 
     .guide {
-      margin-bottom: 8px;
-      font-size: 12px;
+      margin-bottom: 6px;
+      font-size: 11px;
       color: var(--muted);
     }
 
     .register-row {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
 
     .input {
       width: 100%;
-      height: 40px;
+      height: 32px;
       border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 10px;
-      padding: 0 12px;
-      font-size: 14px;
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 13px;
       outline: none;
       background: rgba(255, 255, 255, 0.92);
     }
@@ -181,80 +164,88 @@
     }
 
     .status {
-      min-height: 18px;
-      margin: 8px 2px 0;
-      font-size: 12px;
+      min-height: 16px;
+      margin: 4px 2px 0;
+      font-size: 11px;
       color: #666;
     }
 
     .sheet {
-      margin-top: 2px;
+      border-radius: 10px;
+      background:
+        linear-gradient(
+          to right,
+          transparent 0,
+          transparent calc(var(--margin-x) - 1px),
+          var(--margin-line) calc(var(--margin-x) - 1px),
+          var(--margin-line) calc(var(--margin-x) + 1px),
+          transparent calc(var(--margin-x) + 1px),
+          transparent 100%
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent calc(var(--row-h) - 1px + var(--line-offset)),
+          var(--line-color) calc(var(--row-h) - 1px + var(--line-offset)),
+          var(--line-color) calc(var(--row-h) + var(--line-offset))
+        );
     }
 
+    /* 핵심: 행 하나 = 노트 한 줄 하나 */
     .row {
       display: grid;
       grid-template-columns: var(--date-col) 1fr var(--save-col);
       align-items: center;
       height: var(--row-h);
+      min-height: var(--row-h);
+      max-height: var(--row-h);
     }
 
     .day-cell,
     .memo-cell,
     .save-cell {
       height: var(--row-h);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* 핵심: 선 위가 아니라 칸 중앙으로 */
-    .day-inner,
-    .memo-input,
-    .save-btn {
-      height: var(--content-h);
+      min-height: var(--row-h);
+      max-height: var(--row-h);
       display: flex;
       align-items: center;
     }
 
     .day-cell {
       justify-content: center;
-    }
-
-    .day-inner {
-      justify-content: center;
-      width: 100%;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: #666;
+      white-space: nowrap;
       line-height: 1;
     }
 
-    .day-inner.sat {
+    .day-cell.sat {
       color: var(--sat);
     }
 
-    .day-inner.sun {
+    .day-cell.sun {
       color: var(--sun);
     }
 
     .memo-cell {
-      padding: 0 10px 0 14px;
-      justify-content: stretch;
+      padding: 0 6px 0 8px;
     }
 
     .memo-input {
       width: 100%;
+      height: 100%;
       border: none;
       outline: none;
       background: transparent;
       padding: 0;
-      font-size: 14px;
-      line-height: 1;
+      font-size: 12px;
       color: var(--text);
+      line-height: 1;
     }
 
     .memo-input::placeholder {
-      color: rgba(0, 0, 0, 0.22);
+      color: rgba(0, 0, 0, 0.2);
     }
 
     .save-cell {
@@ -262,19 +253,18 @@
     }
 
     .save-btn {
-      width: 36px;
-      justify-content: center;
+      width: 20px;
+      height: 20px;
       border: none;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.6);
-      color: #7b7b7b;
-      font-size: 11px;
+      background: transparent;
+      color: #8a8a8a;
+      font-size: 13px;
       cursor: pointer;
-      transition: background 0.15s ease, color 0.15s ease;
+      padding: 0;
+      line-height: 1;
     }
 
     .save-btn:hover {
-      background: rgba(255, 255, 255, 0.95);
       color: #111;
     }
 
@@ -284,34 +274,33 @@
     }
 
     .footer {
-      margin-top: 6px;
-      padding-top: 6px;
-      font-size: 11px;
+      margin-top: 4px;
+      padding-top: 4px;
+      font-size: 10px;
       color: #7c7c7c;
       text-align: right;
     }
 
     @media (max-width: 640px) {
       :root {
-        --row-h: 34px;
-        --content-h: 26px;
-        --date-col: 68px;
-        --save-col: 48px;
-        --margin-x: 82px;
+        --row-h: 22px;
+        --date-col: 52px;
+        --save-col: 26px;
+        --margin-x: 60px;
       }
 
       .widget {
-        padding: 12px 12px 10px;
-        border-radius: 16px;
+        padding: 8px 10px 8px;
+        border-radius: 14px;
       }
 
       .month-title {
-        font-size: 18px;
+        font-size: 16px;
       }
 
       .user-name {
-        max-width: 120px;
-        font-size: 13px;
+        max-width: 110px;
+        font-size: 12px;
       }
 
       .register-row {
@@ -358,12 +347,10 @@
 
     const monthTitle = document.getElementById('monthTitle');
     const userNameText = document.getElementById('userNameText');
-
     const registerBox = document.getElementById('registerBox');
     const userNameInput = document.getElementById('userNameInput');
     const registerBtn = document.getElementById('registerBtn');
     const registerStatus = document.getElementById('registerStatus');
-
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const sheetEl = document.getElementById('sheet');
@@ -453,9 +440,7 @@
 
         html += `
           <div class="row">
-            <div class="day-cell">
-              <div class="day-inner ${dayClass}">${day}일</div>
-            </div>
+            <div class="day-cell ${dayClass}">${day}일</div>
             <div class="memo-cell">
               <input
                 class="memo-input"
@@ -466,7 +451,7 @@
               />
             </div>
             <div class="save-cell">
-              <button class="save-btn" type="button" data-save-day="${day}">저장</button>
+              <button class="save-btn" type="button" data-save-day="${day}">✓</button>
             </div>
           </div>
         `;
@@ -573,6 +558,12 @@
           userName
         });
 
+        if (result.success && result.mode === 'existing') {
+          alert('이미 존재하는 이름입니다. 다른 이름을 사용해 주세요.');
+          setRegisterStatus('이미 등록된 이름입니다.', true);
+          return;
+        }
+
         if (!result.success || !result.user) {
           throw new Error(result.message || '등록에 실패했습니다.');
         }
@@ -635,7 +626,7 @@
       }
 
       btn.disabled = true;
-      btn.textContent = '...';
+      btn.textContent = '…';
 
       try {
         const result = await postJson({
@@ -652,16 +643,16 @@
         }
 
         currentRecordsMap[day] = result.record;
-        btn.textContent = '완료';
+        btn.textContent = '✓';
         btn.classList.add('saved');
         setStatus(`${day}일 기록이 저장되었습니다.`);
 
         setTimeout(() => {
-          btn.textContent = '저장';
+          btn.textContent = '✓';
           btn.classList.remove('saved');
-        }, 900);
+        }, 700);
       } catch (error) {
-        btn.textContent = '저장';
+        btn.textContent = '✓';
         setStatus(error.message || '저장 중 오류가 발생했습니다.', true);
       } finally {
         btn.disabled = false;
