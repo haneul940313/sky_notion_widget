@@ -16,12 +16,10 @@
       --sat: #5d86c8;
       --sun: #d06f6f;
       --glass: rgba(255, 255, 255, 0.78);
-      --glass-strong: rgba(255, 255, 255, 0.95);
       --shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
 
       --row-h: 24px;
       --date-col: 56px;
-      --save-col: 28px;
       --margin-x: 64px;
       --line-offset: 0px;
     }
@@ -52,20 +50,20 @@
 
     .header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
       margin-bottom: 4px;
       padding-bottom: 6px;
-      background: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.2);
     }
 
-    .header-left,
-    .header-right {
+    .header-left {
       display: flex;
       align-items: center;
       gap: 6px;
       min-width: 0;
+      flex-wrap: wrap;
     }
 
     .month-title {
@@ -73,6 +71,15 @@
       font-weight: 700;
       letter-spacing: -0.02em;
       white-space: nowrap;
+      margin: 0 2px;
+    }
+
+    .user-block {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+      min-width: 0;
     }
 
     .user-name {
@@ -82,25 +89,24 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 150px;
+      max-width: 140px;
     }
 
     .icon-btn,
     .text-btn,
     .menu-btn {
-      border: 1px solid rgba(0, 0, 0, 0.07);
-      background: var(--glass-strong);
+      border: none;
+      background: transparent;
       color: #222;
-      border-radius: 8px;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease;
+      padding: 0;
+      transition: transform 0.15s ease, opacity 0.15s ease;
     }
 
     .icon-btn {
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      font-size: 14px;
+      width: 22px;
+      height: 22px;
+      font-size: 18px;
       font-weight: 700;
       line-height: 1;
     }
@@ -111,21 +117,26 @@
       font-size: 12px;
       font-weight: 600;
       white-space: nowrap;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.65);
     }
 
     .menu-btn {
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      font-size: 16px;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
       line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -1px;
     }
 
     .icon-btn:hover,
     .text-btn:hover,
     .menu-btn:hover {
       transform: translateY(-1px);
-      background: #fff;
+      opacity: 0.75;
     }
 
     .login-box {
@@ -200,7 +211,7 @@
 
     .row {
       display: grid;
-      grid-template-columns: var(--date-col) 1fr var(--save-col);
+      grid-template-columns: var(--date-col) 1fr;
       align-items: center;
       height: var(--row-h);
       min-height: var(--row-h);
@@ -208,8 +219,7 @@
     }
 
     .day-cell,
-    .memo-cell,
-    .save-cell {
+    .memo-cell {
       height: var(--row-h);
       display: flex;
       align-items: center;
@@ -228,7 +238,8 @@
     .day-cell.sun { color: var(--sun); }
 
     .memo-cell {
-      padding: 0 6px 0 8px;
+      padding: 0 8px 0 8px;
+      position: relative;
     }
 
     .memo-input {
@@ -248,33 +259,32 @@
       cursor: default;
     }
 
-    .save-cell {
-      justify-content: center;
+    .memo-input.saving {
+      color: #666;
     }
 
-    .save-btn {
-      width: 20px;
-      height: 20px;
-      border: none;
-      background: transparent;
+    .memo-input.saved {
+      color: var(--text);
+    }
+
+    .memo-input.error {
+      color: #c0392b;
+    }
+
+    .save-indicator {
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
       color: #8a8a8a;
-      font-size: 13px;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-      opacity: 1;
-      transition: opacity 0.15s ease, color 0.15s ease;
-    }
-
-    .save-btn:hover { color: #111; }
-    .save-btn.saved { color: #111; font-weight: 700; }
-    .save-btn.hidden {
       opacity: 0;
+      transition: opacity 0.15s ease;
       pointer-events: none;
     }
-    .save-btn:disabled {
-      opacity: 0.45;
-      cursor: default;
+
+    .save-indicator.show {
+      opacity: 1;
     }
 
     .menu-wrap {
@@ -289,13 +299,13 @@
     .menu-pop {
       display: none;
       position: absolute;
-      top: 34px;
+      top: 24px;
       right: 0;
       min-width: 88px;
       background: #fff;
-      border: 1px solid rgba(0,0,0,0.08);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 10px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
       padding: 6px;
       z-index: 20;
     }
@@ -332,7 +342,6 @@
       :root {
         --row-h: 22px;
         --date-col: 52px;
-        --save-col: 26px;
         --margin-x: 60px;
       }
 
@@ -341,8 +350,18 @@
         border-radius: 14px;
       }
 
-      .month-title { font-size: 16px; }
-      .user-name { max-width: 110px; font-size: 12px; }
+      .month-title {
+        font-size: 16px;
+      }
+
+      .user-name {
+        max-width: 96px;
+        font-size: 12px;
+      }
+
+      .user-block {
+        margin-left: 8px;
+      }
 
       .login-row {
         flex-direction: column;
@@ -359,17 +378,17 @@
   <div class="widget">
     <div class="header">
       <div class="header-left">
-        <button class="icon-btn" id="prevBtn" type="button">‹</button>
+        <button class="icon-btn" id="prevBtn" type="button" aria-label="이전 월">‹</button>
         <div class="month-title" id="monthTitle">2026년 3월</div>
-        <button class="icon-btn" id="nextBtn" type="button">›</button>
-      </div>
+        <button class="icon-btn" id="nextBtn" type="button" aria-label="다음 월">›</button>
 
-      <div class="header-right">
-        <div class="user-name" id="userNameText">사용자</div>
-        <div class="menu-wrap" id="menuWrap">
-          <button class="menu-btn" id="menuBtn" type="button">⋯</button>
-          <div class="menu-pop" id="menuPop">
-            <button class="menu-item" id="logoutBtn" type="button">로그아웃</button>
+        <div class="user-block">
+          <div class="user-name" id="userNameText">사용자</div>
+          <div class="menu-wrap" id="menuWrap">
+            <button class="menu-btn" id="menuBtn" type="button" aria-label="메뉴">⋯</button>
+            <div class="menu-pop" id="menuPop">
+              <button class="menu-item" id="logoutBtn" type="button">로그아웃</button>
+            </div>
           </div>
         </div>
       </div>
@@ -391,8 +410,9 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwGH-ox_WAhBKAqyjP5RYh4bozGgW1rCUaDVCVeRoHISUktfX0leoimwFh82itpFdt9IA/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwHN2xQr85KT3AWgJu388sRzEjYukyo7vb-vyNqre2j0UuJ0FXGAcn1FpBVX2SvzxBQwg/exec';
     const STORAGE_KEY = 'clonote_login_token';
+    const SAVE_DEBOUNCE_MS = 700;
 
     const monthTitle = document.getElementById('monthTitle');
     const userNameText = document.getElementById('userNameText');
@@ -414,6 +434,8 @@
     let currentUser = null;
     let currentToken = localStorage.getItem(STORAGE_KEY) || '';
     let currentRecordsMap = {};
+    let saveTimers = {};
+    let saveVersions = {};
 
     function setStatus(message, isError = false) {
       statusText.textContent = message || '';
@@ -490,40 +512,33 @@
       return sheetEl.querySelector(`.memo-input[data-day="${day}"]`);
     }
 
-    function getSaveBtnByDay(day) {
-      return sheetEl.querySelector(`.save-btn[data-save-day="${day}"]`);
+    function getIndicatorByDay(day) {
+      return sheetEl.querySelector(`.save-indicator[data-indicator-day="${day}"]`);
     }
 
-    function updateSaveButtonVisibility(day) {
+    function setIndicator(day, text = '', show = false) {
+      const indicator = getIndicatorByDay(day);
+      if (!indicator) return;
+      indicator.textContent = text;
+      indicator.classList.toggle('show', show && !!text);
+    }
+
+    function clearSaveTimer(day) {
+      if (saveTimers[day]) {
+        clearTimeout(saveTimers[day]);
+        delete saveTimers[day];
+      }
+    }
+
+    function markInputState(day, state) {
       const input = getInputByDay(day);
-      const btn = getSaveBtnByDay(day);
-      if (!input || !btn) return;
+      if (!input) return;
 
-      if (!currentUser) {
-        btn.classList.add('hidden');
-        return;
+      input.classList.remove('saving', 'saved', 'error');
+
+      if (state) {
+        input.classList.add(state);
       }
-
-      const currentValue = (input.value || '').trim();
-      const savedValue = getSavedMemo(day);
-
-      if (!currentValue) {
-        btn.classList.add('hidden');
-        return;
-      }
-
-      if (currentValue === savedValue) {
-        btn.classList.add('hidden');
-      } else {
-        btn.classList.remove('hidden');
-      }
-    }
-
-    function updateAllSaveButtons() {
-      const inputs = sheetEl.querySelectorAll('.memo-input');
-      inputs.forEach((input) => {
-        updateSaveButtonVisibility(Number(input.dataset.day));
-      });
     }
 
     function renderSheet() {
@@ -549,9 +564,7 @@
                 placeholder=""
                 ${currentUser ? '' : 'disabled'}
               />
-            </div>
-            <div class="save-cell">
-              <button class="save-btn" type="button" data-save-day="${day}" ${currentUser ? '' : 'disabled'}>✓</button>
+              <span class="save-indicator" data-indicator-day="${day}"></span>
             </div>
           </div>
         `;
@@ -559,39 +572,39 @@
 
       sheetEl.innerHTML = html;
 
-      sheetEl.querySelectorAll('.save-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const day = Number(btn.dataset.saveDay);
-          saveDayRecord(day);
-        });
-      });
-
       sheetEl.querySelectorAll('.memo-input').forEach((input) => {
         input.addEventListener('input', () => {
-          updateSaveButtonVisibility(Number(input.dataset.day));
+          const day = Number(input.dataset.day);
+          scheduleAutoSave(day);
         });
 
         input.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            saveDayRecord(Number(input.dataset.day));
+            const day = Number(input.dataset.day);
+            clearSaveTimer(day);
+            saveDayRecord(day, false, true);
           }
         });
 
         input.addEventListener('blur', () => {
           const day = Number(input.dataset.day);
-          const currentValue = (input.value || '').trim();
-          const savedValue = getSavedMemo(day);
-
-          if (currentValue && currentValue !== savedValue) {
-            saveDayRecord(day, true);
-          } else {
-            updateSaveButtonVisibility(day);
-          }
+          clearSaveTimer(day);
+          saveDayRecord(day, true, true);
         });
       });
+    }
 
-      updateAllSaveButtons();
+    function scheduleAutoSave(day) {
+      if (!currentUser) return;
+
+      clearSaveTimer(day);
+      setIndicator(day, '저장중', true);
+      markInputState(day, 'saving');
+
+      saveTimers[day] = setTimeout(() => {
+        saveDayRecord(day, true, true);
+      }, SAVE_DEBOUNCE_MS);
     }
 
     async function getJson(url) {
@@ -698,6 +711,10 @@
       } catch (error) {
       }
 
+      Object.keys(saveTimers).forEach((key) => clearTimeout(saveTimers[key]));
+      saveTimers = {};
+      saveVersions = {};
+
       localStorage.removeItem(STORAGE_KEY);
       currentToken = '';
       currentUser = null;
@@ -733,28 +750,38 @@
       }
     }
 
-    async function saveDayRecord(day, silent = false) {
+    async function saveDayRecord(day, silent = false, skipIfSame = false) {
       if (!currentUser || !currentUser.userId) {
         if (!silent) setStatus('먼저 로그인해 주세요.', true);
         return;
       }
 
+      clearSaveTimer(day);
+
       const input = getInputByDay(day);
-      const btn = getSaveBtnByDay(day);
-      if (!input || !btn) return;
+      if (!input) return;
 
       const memo = input.value.trim();
+      const savedMemo = getSavedMemo(day);
 
       if (!memo) {
-        if (!silent) setStatus('빈칸은 저장할 수 없습니다.', true);
-        input.value = currentRecordsMap[day]?.memo || '';
-        updateSaveButtonVisibility(day);
+        setIndicator(day, '', false);
+        markInputState(day, '');
+        if (!silent) setStatus('빈칸은 저장되지 않습니다.', true);
         return;
       }
 
-      btn.disabled = true;
-      btn.classList.remove('hidden');
-      btn.textContent = '…';
+      if (skipIfSame && memo === savedMemo) {
+        setIndicator(day, '', false);
+        markInputState(day, 'saved');
+        return;
+      }
+
+      const version = (saveVersions[day] || 0) + 1;
+      saveVersions[day] = version;
+
+      setIndicator(day, '저장중', true);
+      markInputState(day, 'saving');
 
       try {
         const result = await postJson({
@@ -766,26 +793,27 @@
           memo
         });
 
+        if (saveVersions[day] !== version) return;
+
         if (!result.success) {
           throw new Error(result.message || '저장에 실패했습니다.');
         }
 
         currentRecordsMap[day] = result.record;
-        btn.textContent = '✓';
-        btn.classList.add('saved');
+        setIndicator(day, '', false);
+        markInputState(day, 'saved');
         setStatus(`${day}일 기록이 저장되었습니다.`);
 
         setTimeout(() => {
-          btn.classList.remove('saved');
-          btn.textContent = '✓';
-          updateSaveButtonVisibility(day);
-        }, 500);
+          if (saveVersions[day] === version) {
+            markInputState(day, '');
+          }
+        }, 400);
       } catch (error) {
-        btn.textContent = '✓';
-        updateSaveButtonVisibility(day);
+        if (saveVersions[day] !== version) return;
+        setIndicator(day, '오류', true);
+        markInputState(day, 'error');
         setStatus(error.message || '저장 중 오류가 발생했습니다.', true);
-      } finally {
-        btn.disabled = false;
       }
     }
 
