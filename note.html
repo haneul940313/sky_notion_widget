@@ -262,10 +262,16 @@
       cursor: pointer;
       padding: 0;
       line-height: 1;
+      opacity: 1;
+      transition: opacity 0.15s ease, color 0.15s ease;
     }
 
     .save-btn:hover { color: #111; }
     .save-btn.saved { color: #111; font-weight: 700; }
+    .save-btn.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
     .save-btn:disabled {
       opacity: 0.45;
       cursor: default;
@@ -385,7 +391,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbygx6G-U5A80JXCw7MAT-faGLtgTORUTTFU_66w_x9gLx9JeH0ZvJWq9Xo_1cAIxPrCGQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwHN2xQr85KT3AWgJu388sRzEjYukyo7vb-vyNqre2j0UuJ0FXGAcn1FpBVX2SvzxBQwg/exec';
     const STORAGE_KEY = 'clonote_login_token';
 
     const monthTitle = document.getElementById('monthTitle');
@@ -476,6 +482,50 @@
       currentRecordsMap = map;
     }
 
+    function getSavedMemo(day) {
+      return (currentRecordsMap[day]?.memo || '').trim();
+    }
+
+    function getInputByDay(day) {
+      return sheetEl.querySelector(`.memo-input[data-day="${day}"]`);
+    }
+
+    function getSaveBtnByDay(day) {
+      return sheetEl.querySelector(`.save-btn[data-save-day="${day}"]`);
+    }
+
+    function updateSaveButtonVisibility(day) {
+      const input = getInputByDay(day);
+      const btn = getSaveBtnByDay(day);
+      if (!input || !btn) return;
+
+      if (!currentUser) {
+        btn.classList.add('hidden');
+        return;
+      }
+
+      const currentValue = (input.value || '').trim();
+      const savedValue = getSavedMemo(day);
+
+      if (!currentValue) {
+        btn.classList.add('hidden');
+        return;
+      }
+
+      if (currentValue === savedValue) {
+        btn.classList.add('hidden');
+      } else {
+        btn.classList.remove('hidden');
+      }
+    }
+
+    function updateAllSaveButtons() {
+      const inputs = sheetEl.querySelectorAll('.memo-input');
+      inputs.forEach((input) => {
+        updateSaveButtonVisibility(Number(input.dataset.day));
+      });
+    }
+
     function renderSheet() {
       const year = getYear();
       const month = getMonth();
@@ -517,6 +567,10 @@
       });
 
       sheetEl.querySelectorAll('.memo-input').forEach((input) => {
+        input.addEventListener('input', () => {
+          updateSaveButtonVisibility(Number(input.dataset.day));
+        });
+
         input.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -526,20 +580,18 @@
 
         input.addEventListener('blur', () => {
           const day = Number(input.dataset.day);
-          const origin = currentRecordsMap[day]?.memo || '';
-          if (input.value !== origin) {
+          const currentValue = (input.value || '').trim();
+          const savedValue = getSavedMemo(day);
+
+          if (currentValue && currentValue !== savedValue) {
             saveDayRecord(day, true);
+          } else {
+            updateSaveButtonVisibility(day);
           }
         });
       });
-    }
 
-    function getInputByDay(day) {
-      return sheetEl.querySelector(`.memo-input[data-day="${day}"]`);
-    }
-
-    function getSaveBtnByDay(day) {
-      return sheetEl.querySelector(`.save-btn[data-save-day="${day}"]`);
+      updateAllSaveButtons();
     }
 
     async function getJson(url) {
@@ -696,10 +748,12 @@
       if (!memo) {
         if (!silent) setStatus('빈칸은 저장할 수 없습니다.', true);
         input.value = currentRecordsMap[day]?.memo || '';
+        updateSaveButtonVisibility(day);
         return;
       }
 
       btn.disabled = true;
+      btn.classList.remove('hidden');
       btn.textContent = '…';
 
       try {
@@ -722,11 +776,13 @@
         setStatus(`${day}일 기록이 저장되었습니다.`);
 
         setTimeout(() => {
-          btn.textContent = '✓';
           btn.classList.remove('saved');
-        }, 700);
+          btn.textContent = '✓';
+          updateSaveButtonVisibility(day);
+        }, 500);
       } catch (error) {
         btn.textContent = '✓';
+        updateSaveButtonVisibility(day);
         setStatus(error.message || '저장 중 오류가 발생했습니다.', true);
       } finally {
         btn.disabled = false;
