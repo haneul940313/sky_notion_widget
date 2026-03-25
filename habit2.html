@@ -225,7 +225,6 @@
       display: grid;
       align-items: center;
       height: var(--row-h);
-      padding: 0 0 0 var(--margin-x);
       gap: 0;
     }
 
@@ -550,10 +549,31 @@
 
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycby1PwZNi5iDw1k-Oh1fjVXO5XXQBX9xziLa5ZV0NG5sbgjxHpyppejqC8ucpQHWcN6O7g/exec';
-const STORAGE_KEY      = 'habitcheck_token';
-const STORAGE_USER_KEY = 'habitcheck_user';
+const STORAGE_KEY        = 'habitcheck_token';
+const STORAGE_USER_KEY   = 'habitcheck_user';
+const STORAGE_CACHE_PFX  = 'habitcheck_cache';
 const MAX_HABITS = 10;
 const DEFAULT_HABITS = 5;
+
+function cacheKey(userId, ym, type) {
+  return `${STORAGE_CACHE_PFX}:${userId}:${ym}:${type}`;
+}
+function saveCache(userId, ym, habits, checks) {
+  try {
+    localStorage.setItem(cacheKey(userId, ym, 'habits'), JSON.stringify(habits));
+    localStorage.setItem(cacheKey(userId, ym, 'checks'), JSON.stringify(checks));
+  } catch {}
+}
+function loadCache(userId, ym) {
+  try {
+    const h = localStorage.getItem(cacheKey(userId, ym, 'habits'));
+    const c = localStorage.getItem(cacheKey(userId, ym, 'checks'));
+    return {
+      habits: h ? JSON.parse(h) : null,
+      checks: c ? JSON.parse(c) : null
+    };
+  } catch { return { habits: null, checks: null }; }
+}
 
 let currentDate   = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let currentUser   = null;
@@ -709,10 +729,25 @@ async function loadAll() {
   renderLoginState();
   if (!currentUser) return;
 
+  const ym = getYearMonth();
+
+  // 캐시 먼저 복원 → 즉시 렌더
+  const cached = loadCache(currentUser.userId, ym);
+  if (cached.habits) currentHabits = cached.habits;
+  if (cached.checks) {
+    currentChecks = {};
+    Object.entries(cached.checks).forEach(([d, v]) => { currentChecks[Number(d)] = v; });
+  }
+  renderSheet();
+  renderWeekSheet();
+  renderHabitSetup();
+  renderGraph();
+
+  // 서버에서 최신 데이터 가져와서 갱신
   try {
     const [hRes, cRes] = await Promise.all([
-      getJson(`${API_URL}?action=getHabits&userId=${currentUser.userId}&yearMonth=${getYearMonth()}`),
-      getJson(`${API_URL}?action=getChecks&userId=${currentUser.userId}&yearMonth=${getYearMonth()}`)
+      getJson(`${API_URL}?action=getHabits&userId=${currentUser.userId}&yearMonth=${ym}`),
+      getJson(`${API_URL}?action=getChecks&userId=${currentUser.userId}&yearMonth=${ym}`)
     ]);
 
     currentHabits = (hRes.success && hRes.habits) ? hRes.habits : Array(MAX_HABITS).fill('');
@@ -720,10 +755,10 @@ async function loadAll() {
     if (cRes.success && cRes.checks) {
       cRes.checks.forEach(c => { currentChecks[c.day] = c.checks; });
     }
+    saveCache(currentUser.userId, ym, currentHabits, currentChecks);
   } catch {
-    currentHabits = Array(MAX_HABITS).fill('');
-    currentChecks = {};
     setStatus('데이터를 불러오지 못했습니다.', true);
+    return;
   }
 
   renderSheet();
@@ -733,7 +768,14 @@ async function loadAll() {
   setStatus('');
 }
 
-/* ── WEEK SHEET ── */
+/* ── GRID 컬럼 계산 ── */
+function buildColTpl(count) {
+  // date고정 + 체크박스 고정 32px * count + 합계 28px
+  return `var(--date-col) repeat(${count}, 32px) 28px`;
+}
+function buildHeaderColTpl(count) {
+  return buildColTpl(count);
+}
 function getWeekDays() {
   // 이번 달 기준 currentWeekOffset 주의 월~일 (해당 월 범위 내)
   const today = new Date();
@@ -763,14 +805,12 @@ function renderWeekSheet() {
   const days  = getWeekDays();
   const lastDay = getLastDay();
 
-  // 주 레이블
   if (days.length > 0) {
     weekLabel.textContent = `${days[0]}일 — ${days[days.length - 1]}일`;
   } else {
     weekLabel.textContent = '해당 없음';
   }
 
-  // 화살표 비활성화 조건
   const minDay = days.length > 0 ? days[0] : 1;
   const maxDay = days.length > 0 ? days[days.length - 1] : lastDay;
   weekPrevBtn.disabled = minDay <= 1;
@@ -778,11 +818,10 @@ function renderWeekSheet() {
 
   if (days.length === 0) { weekSheetEl.innerHTML = ''; return; }
 
-  let colTpl = `var(--date-col) repeat(${count}, 1fr) 32px`;
+  const colTpl = buildColTpl(count);
 
   // 헤더
-  let html = `<div class="habit-header" style="grid-template-columns:${colTpl};">`;
-  html += `<div></div>`;
+  let html = `<div class="habit-header" style="grid-template-columns:${colTpl}; padding-left:var(--date-col);">`;
   names.forEach(n => {
     html += `<div class="habit-header-cell">${escHtml(n || '—')}</div>`;
   });
@@ -813,7 +852,6 @@ function renderWeekSheet() {
   });
 
   weekSheetEl.innerHTML = html;
-
   weekSheetEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', onCheckChange);
   });
@@ -824,18 +862,16 @@ function renderSheet() {
   const count = activeHabitCount();
   const names = currentHabits.slice(0, count);
   const lastDay = getLastDay();
+  const colTpl = buildColTpl(count);
 
-  // 헤더
-  let colTpl = `var(--date-col) repeat(${count}, 1fr) 32px`;
-  let headerHtml = `<div class="habit-header" style="grid-template-columns:${colTpl};">`;
-  headerHtml += `<div></div>`;
+  // 헤더 (date 칸 건너뛰고 체크박스 위에 바로 이름)
+  let headerHtml = `<div class="habit-header" style="grid-template-columns:${colTpl}; padding-left:var(--date-col);">`;
   names.forEach(n => {
     headerHtml += `<div class="habit-header-cell">${escHtml(n || '—')}</div>`;
   });
   headerHtml += `<div class="habit-header-cell" style="color:var(--accent);">합</div>`;
   headerHtml += `</div>`;
 
-  // 날짜 행
   let rowsHtml = '';
   for (let day = 1; day <= lastDay; day++) {
     const cls = getDayClass(day);
@@ -858,8 +894,6 @@ function renderSheet() {
   }
 
   sheetEl.innerHTML = headerHtml + rowsHtml;
-
-  // 이벤트
   sheetEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', onCheckChange);
   });
@@ -875,33 +909,40 @@ async function onCheckChange(e) {
   prev[idx] = e.target.checked;
   currentChecks[day] = prev;
 
-  // 합계 즉시 반영 (전체 시트 + 주간 시트 둘 다)
+  // 합계 즉시 반영
   const total = prev.slice(0, count).filter(Boolean).length;
   const totalEl = sheetEl.querySelector(`[data-total-day="${day}"]`);
   if (totalEl) totalEl.textContent = total > 0 ? total : '';
   const weekTotalEl = weekSheetEl.querySelector(`[data-week-total-day="${day}"]`);
   if (weekTotalEl) weekTotalEl.textContent = total > 0 ? total : '';
 
-  // 체크 상태 동기화 (전체 시트 ↔ 주간 시트)
+  // 체크 상태 동기화 (전체 ↔ 주간)
   const twin = e.target.dataset.source === 'week'
     ? sheetEl.querySelector(`input[data-day="${day}"][data-idx="${idx}"]`)
     : weekSheetEl.querySelector(`input[data-day="${day}"][data-idx="${idx}"]`);
   if (twin) twin.checked = e.target.checked;
 
-  // 그래프 업데이트
   if (activeTab === 'home') renderGraph();
 
-  try {
-    await postJson({
-      action: 'saveCheck',
-      userId: currentUser.userId,
-      yearMonth: getYearMonth(),
-      day,
-      checks: prev
-    });
-  } catch {
-    setStatus('저장 중 오류가 발생했습니다.', true);
-  }
+  // 캐시 즉시 갱신
+  saveCache(currentUser.userId, getYearMonth(), currentHabits, currentChecks);
+
+  // 디바운스: 연속 체크 시 마지막 상태만 한 번 저장 (하루 1행)
+  clearTimeout(onCheckChange._timers?.[day]);
+  if (!onCheckChange._timers) onCheckChange._timers = {};
+  onCheckChange._timers[day] = setTimeout(async () => {
+    try {
+      await postJson({
+        action: 'saveCheck',
+        userId: currentUser.userId,
+        yearMonth: getYearMonth(),
+        day,
+        checks: currentChecks[day]
+      });
+    } catch {
+      setStatus('저장 중 오류가 발생했습니다.', true);
+    }
+  }, 600);
 }
 
 /* ── HABIT SETUP ── */
@@ -950,6 +991,7 @@ async function saveHabits() {
     if (!res.success) throw new Error(res.message);
     currentHabits = res.habits;
     habitChanged = false;
+    saveCache(currentUser.userId, getYearMonth(), currentHabits, currentChecks);
     renderSheet();
     renderWeekSheet();
     renderGraph();
